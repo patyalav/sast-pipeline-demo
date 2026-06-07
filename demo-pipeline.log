@@ -2,3 +2,28 @@
 [2026-06-07 11:54:43] [WARN] This is a WARN test
 [2026-06-07 11:54:43] [ERROR] This is an ERROR test
 [2026-06-07 11:54:43] [DEBUG] This is a DEBUG test — only visible if DEBUG_MODE=true
+[2026-06-07 13:02:44] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 13:02:44] [INFO] StatusManager — gitleaks → running
+[2026-06-07 13:02:44] [INFO] StatusManager — gitleaks → done | findings: 135
+[2026-06-07 13:02:44] [ERROR] StatusManager — codacy → failed | API timeout
+[2026-06-07 13:05:11] [INFO] Validator — checking submitted URL
+[2026-06-07 13:05:11] [WARN] Validator — URL missing or not a string
+[2026-06-07 13:05:11] [INFO] Validator — checking submitted URL
+[2026-06-07 13:05:11] [WARN] Validator — URL missing or not a string
+[2026-06-07 13:05:11] [INFO] Validator — checking submitted URL
+[2026-06-07 13:05:11] [WARN] Validator — invalid URL format: https://google.com/something
+[2026-06-07 13:05:11] [INFO] Validator — checking submitted URL
+[2026-06-07 13:05:11] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 13:05:11] [INFO] Validator — checking submitted URL
+[2026-06-07 13:05:11] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop.git
+[2026-06-07 13:06:39] [INFO] Cleanup — deleted: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\test-cleanup-dummy
+[2026-06-07 13:06:39] [WARN] Cleanup — directory not found, skipping: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\does-not-exist
+[2026-06-07 13:06:39] [ERROR] Cleanup — no directory path provided
+[2026-06-07 13:35:50] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 13:35:50] [INFO] SonarQube health check — UP ✅
+[2026-06-07 14:33:41] [INFO] ReportCombiner — starting
+[2026-06-07 14:33:41] [INFO] ReportCombiner — gitleaks: 1 findings
+[2026-06-07 14:33:41] [INFO] ReportCombiner — semgrep: 1 findings
+[2026-06-07 14:33:41] [WARN] ReportCombiner — sonarqube report not found, skipping
+[2026-06-07 14:33:41] [WARN] ReportCombiner — codacy report not found, skipping
+[2026-06-07 14:33:41] [INFO] ReportCombiner — written | total findings: 2
