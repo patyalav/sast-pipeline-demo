@@ -27,3 +27,38 @@
 [2026-06-07 14:33:41] [WARN] ReportCombiner — sonarqube report not found, skipping
 [2026-06-07 14:33:41] [WARN] ReportCombiner — codacy report not found, skipping
 [2026-06-07 14:33:41] [INFO] ReportCombiner — written | total findings: 2
+[2026-06-07 17:36:20] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 17:36:20] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 17:36:20] [INFO] SonarQube health check — UP ✅
+[2026-06-07 17:36:20] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:36:20] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 17:36:20] [INFO] URL      : http://localhost:3000
+[2026-06-07 17:36:20] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 17:36:20] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:39:11] [INFO] GET /health
+[2026-06-07 17:39:24] [INFO] POST /api/scan — request received
+[2026-06-07 17:39:24] [INFO] Validator — checking submitted URL
+[2026-06-07 17:39:24] [WARN] Validator — invalid URL format: not-a-url
+[2026-06-07 17:39:24] [WARN] POST /api/scan — invalid URL | Must be a valid GitHub repository URL (https://github.com/owner/repo)
+[2026-06-07 17:39:35] [INFO] POST /api/scan — request received
+[2026-06-07 17:39:35] [INFO] Validator — checking submitted URL
+[2026-06-07 17:39:35] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:39:35] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:42:23] [INFO] POST /api/scan — request received
+[2026-06-07 17:42:23] [INFO] Validator — checking submitted URL
+[2026-06-07 17:42:23] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:42:23] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:42:54] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 17:42:54] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 17:42:54] [INFO] SonarQube health check — UP ✅
+[2026-06-07 17:42:54] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:42:54] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 17:42:54] [INFO] URL      : http://localhost:3000
+[2026-06-07 17:42:54] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 17:42:54] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:43:01] [INFO] POST /api/scan — request received
+[2026-06-07 17:43:01] [INFO] Validator — checking submitted URL
+[2026-06-07 17:43:01] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:43:01] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:43:01] [INFO] Scan complete — report at: null
+[2026-06-07 17:43:50] [WARN] GET /api/scan/report — report not ready yet
