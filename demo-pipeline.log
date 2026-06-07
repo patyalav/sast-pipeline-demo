@@ -187,3 +187,9 @@
 [2026-06-07 18:06:17] [INFO] Cleanup — deleted: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-36-04\repo
 [2026-06-07 18:06:17] [INFO] Scan complete — report at: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-36-04\pipeline-report.json
 [2026-06-07 18:06:31] [INFO] GET /api/scan/report — serving report
+[2026-06-07 19:05:26] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 19:05:26] [INFO] StatusManager — gitleaks → running
+[2026-06-07 19:05:26] [INFO] Gitleaks — starting scan
+[2026-06-07 19:05:26] [INFO] Gitleaks — command: gitleaks detect --source "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo" --report-format json --report-path "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\test-gitleaks\gitleaks-report.json" --no-git --exit-code 0
+[2026-06-07 19:05:27] [INFO] StatusManager — gitleaks → done | findings: 2
+[2026-06-07 19:05:27] [INFO] Gitleaks — scan complete | findings: 2
