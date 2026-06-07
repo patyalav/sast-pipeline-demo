@@ -1,0 +1,4 @@
+[2026-06-07 11:54:43] [INFO] Logger initialised successfully
+[2026-06-07 11:54:43] [WARN] This is a WARN test
+[2026-06-07 11:54:43] [ERROR] This is an ERROR test
+[2026-06-07 11:54:43] [DEBUG] This is a DEBUG test — only visible if DEBUG_MODE=true
