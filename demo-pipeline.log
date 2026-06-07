@@ -62,3 +62,128 @@
 [2026-06-07 17:43:01] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
 [2026-06-07 17:43:01] [INFO] Scan complete — report at: null
 [2026-06-07 17:43:50] [WARN] GET /api/scan/report — report not ready yet
+[2026-06-07 17:49:16] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 17:49:16] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 17:49:16] [INFO] SonarQube health check — UP ✅
+[2026-06-07 17:49:16] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:49:16] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 17:49:16] [INFO] URL      : http://localhost:3000
+[2026-06-07 17:49:16] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 17:49:16] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:50:00] [INFO] POST /api/scan — request received
+[2026-06-07 17:50:00] [INFO] Validator — checking submitted URL
+[2026-06-07 17:50:00] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:50:00] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:50:00] [INFO] Orchestrator — scan started
+[2026-06-07 17:50:00] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 17:50:00] [INFO] Orchestrator — reports folder: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-20-00
+[2026-06-07 17:50:00] [INFO] Orchestrator — cloning: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:50:06] [INFO] Orchestrator — clone complete: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-20-00\repo
+[2026-06-07 17:50:06] [INFO] Orchestrator — starting all agents in parallel
+[2026-06-07 17:50:06] [INFO] StatusManager — gitleaks → running
+[2026-06-07 17:50:06] [INFO] gitleaks — stub running
+[2026-06-07 17:50:06] [INFO] StatusManager — semgrep → running
+[2026-06-07 17:50:06] [INFO] semgrep — stub running
+[2026-06-07 17:50:06] [INFO] StatusManager — sonarqube → running
+[2026-06-07 17:50:06] [INFO] sonarqube — stub running
+[2026-06-07 17:50:06] [INFO] StatusManager — codacy → running
+[2026-06-07 17:50:06] [INFO] codacy — stub running
+[2026-06-07 17:50:08] [INFO] StatusManager — gitleaks → done | findings: 0
+[2026-06-07 17:50:08] [INFO] gitleaks — stub done
+[2026-06-07 17:50:08] [INFO] StatusManager — semgrep → done | findings: 0
+[2026-06-07 17:50:08] [INFO] semgrep — stub done
+[2026-06-07 17:50:08] [INFO] StatusManager — sonarqube → done | findings: 0
+[2026-06-07 17:50:08] [INFO] sonarqube — stub done
+[2026-06-07 17:50:08] [INFO] StatusManager — codacy → done | findings: 0
+[2026-06-07 17:50:08] [INFO] codacy — stub done
+[2026-06-07 17:50:08] [INFO] Orchestrator — all agents complete
+[2026-06-07 17:50:08] [INFO] ReportCombiner — starting
+[2026-06-07 17:50:08] [WARN] ReportCombiner — gitleaks report not found, skipping
+[2026-06-07 17:50:08] [WARN] ReportCombiner — semgrep report not found, skipping
+[2026-06-07 17:50:08] [WARN] ReportCombiner — sonarqube report not found, skipping
+[2026-06-07 17:50:08] [WARN] ReportCombiner — codacy report not found, skipping
+[2026-06-07 17:50:08] [ERROR] ReportCombiner — no tool reports found
+[2026-06-07 17:50:08] [INFO] Cleanup — deleted: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-20-00\repo
+[2026-06-07 17:50:08] [ERROR] Scan failed — Report combine failed — No tool reports available to combine
+[2026-06-07 17:51:36] [WARN] GET /api/scan/report — report not ready yet
+[2026-06-07 17:58:49] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 17:58:49] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 17:58:49] [INFO] SonarQube health check — UP ✅
+[2026-06-07 17:58:49] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:58:49] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 17:58:49] [INFO] URL      : http://localhost:3000
+[2026-06-07 17:58:49] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 17:58:49] [INFO] ──────────────────────────────────────────
+[2026-06-07 17:59:08] [INFO] POST /api/scan — request received
+[2026-06-07 17:59:08] [INFO] Validator — checking submitted URL
+[2026-06-07 17:59:08] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:59:08] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:59:08] [INFO] Orchestrator — scan started
+[2026-06-07 17:59:08] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 17:59:08] [INFO] Orchestrator — reports folder: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-29-08
+[2026-06-07 17:59:08] [INFO] Orchestrator — cloning: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 17:59:14] [INFO] Orchestrator — clone complete: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-29-08\repo
+[2026-06-07 17:59:14] [INFO] Orchestrator — starting all agents in parallel
+[2026-06-07 17:59:14] [INFO] StatusManager — gitleaks → running
+[2026-06-07 17:59:14] [INFO] gitleaks — stub running
+[2026-06-07 17:59:14] [INFO] StatusManager — gitleaks → done | findings: 2
+[2026-06-07 17:59:14] [INFO] gitleaks — stub done | findings: 2
+[2026-06-07 17:59:14] [INFO] StatusManager — semgrep → running
+[2026-06-07 17:59:14] [INFO] semgrep — stub running
+[2026-06-07 17:59:14] [INFO] StatusManager — semgrep → done | findings: 2
+[2026-06-07 17:59:14] [INFO] semgrep — stub done | findings: 2
+[2026-06-07 17:59:14] [INFO] StatusManager — sonarqube → running
+[2026-06-07 17:59:14] [INFO] sonarqube — stub running
+[2026-06-07 17:59:14] [INFO] StatusManager — sonarqube → done | findings: 3
+[2026-06-07 17:59:14] [INFO] sonarqube — stub done | findings: 3
+[2026-06-07 17:59:14] [INFO] StatusManager — codacy → running
+[2026-06-07 17:59:14] [INFO] codacy — stub running
+[2026-06-07 17:59:14] [INFO] Cleanup — deleted: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-29-08\repo
+[2026-06-07 17:59:14] [ERROR] Scan failed — The "path" argument must be of type string. Received undefined
+[2026-06-07 18:02:56] [WARN] GET /api/scan/report — report not ready yet
+[2026-06-07 18:03:30] [WARN] GET /api/scan/report — report not ready yet
+[2026-06-07 18:05:51] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 18:05:51] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 18:05:51] [INFO] SonarQube health check — UP ✅
+[2026-06-07 18:05:51] [INFO] ──────────────────────────────────────────
+[2026-06-07 18:05:51] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 18:05:51] [INFO] URL      : http://localhost:3000
+[2026-06-07 18:05:51] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 18:05:51] [INFO] ──────────────────────────────────────────
+[2026-06-07 18:06:04] [INFO] POST /api/scan — request received
+[2026-06-07 18:06:04] [INFO] Validator — checking submitted URL
+[2026-06-07 18:06:04] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 18:06:04] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 18:06:04] [INFO] Orchestrator — scan started
+[2026-06-07 18:06:04] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 18:06:04] [INFO] Orchestrator — reports folder: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-36-04
+[2026-06-07 18:06:04] [INFO] Orchestrator — cloning: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 18:06:17] [INFO] Orchestrator — clone complete: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-36-04\repo
+[2026-06-07 18:06:17] [INFO] Orchestrator — starting all agents in parallel
+[2026-06-07 18:06:17] [INFO] StatusManager — gitleaks → running
+[2026-06-07 18:06:17] [INFO] gitleaks — stub running
+[2026-06-07 18:06:17] [INFO] StatusManager — gitleaks → done | findings: 2
+[2026-06-07 18:06:17] [INFO] gitleaks — stub done | findings: 2
+[2026-06-07 18:06:17] [INFO] StatusManager — semgrep → running
+[2026-06-07 18:06:17] [INFO] semgrep — stub running
+[2026-06-07 18:06:17] [INFO] StatusManager — semgrep → done | findings: 2
+[2026-06-07 18:06:17] [INFO] semgrep — stub done | findings: 2
+[2026-06-07 18:06:17] [INFO] StatusManager — sonarqube → running
+[2026-06-07 18:06:17] [INFO] sonarqube — stub running
+[2026-06-07 18:06:17] [INFO] StatusManager — sonarqube → done | findings: 3
+[2026-06-07 18:06:17] [INFO] sonarqube — stub done | findings: 3
+[2026-06-07 18:06:17] [INFO] StatusManager — codacy → running
+[2026-06-07 18:06:17] [INFO] codacy — stub running
+[2026-06-07 18:06:17] [INFO] StatusManager — codacy → done | findings: 3
+[2026-06-07 18:06:17] [INFO] codacy — stub done | findings: 3
+[2026-06-07 18:06:17] [INFO] Orchestrator — all agents complete
+[2026-06-07 18:06:17] [INFO] ReportCombiner — starting
+[2026-06-07 18:06:17] [INFO] ReportCombiner — gitleaks: 2 findings
+[2026-06-07 18:06:17] [INFO] ReportCombiner — semgrep: 2 findings
+[2026-06-07 18:06:17] [INFO] ReportCombiner — sonarqube: 3 findings
+[2026-06-07 18:06:17] [INFO] ReportCombiner — codacy: 3 findings
+[2026-06-07 18:06:17] [INFO] ReportCombiner — written | total findings: 10
+[2026-06-07 18:06:17] [INFO] Orchestrator — pipeline-report.json ready | total: 10
+[2026-06-07 18:06:17] [INFO] Cleanup — deleted: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-36-04\repo
+[2026-06-07 18:06:17] [INFO] Scan complete — report at: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T12-36-04\pipeline-report.json
+[2026-06-07 18:06:31] [INFO] GET /api/scan/report — serving report
