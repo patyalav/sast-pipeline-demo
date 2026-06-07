@@ -228,3 +228,106 @@ Ran 217 rules on 37 files: 11 findings.
 
 [2026-06-07 19:12:30] [INFO] StatusManager — semgrep → done | findings: 11
 [2026-06-07 19:12:30] [INFO] Semgrep — scan complete | findings: 11
+[2026-06-07 20:14:33] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 20:14:33] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 20:14:33] [INFO] SonarQube health check — UP ✅
+[2026-06-07 20:14:33] [INFO] ──────────────────────────────────────────
+[2026-06-07 20:14:33] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 20:14:33] [INFO] URL      : http://localhost:3000
+[2026-06-07 20:14:33] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 20:14:33] [INFO] ──────────────────────────────────────────
+[2026-06-07 20:27:44] [INFO] StatusManager — reset to pending
+[2026-06-07 20:27:44] [INFO] StatusManager — clone → running
+[2026-06-07 20:27:44] [INFO] StatusManager — clone → done
+[2026-06-07 20:27:44] [INFO] StatusManager — gitleaks → running
+[2026-06-07 20:27:44] [INFO] StatusManager — gitleaks → done | findings: 135
+[2026-06-07 20:27:44] [INFO] StatusManager — cleanup → running
+[2026-06-07 20:27:44] [INFO] StatusManager — cleanup → done
+[2026-06-07 20:37:38] [INFO] StatusManager — reset to pending
+[2026-06-07 20:37:38] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 20:37:38] [INFO] SonarQube health check — UP ✅
+[2026-06-07 20:37:38] [INFO] ──────────────────────────────────────────
+[2026-06-07 20:37:38] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 20:37:38] [INFO] URL      : http://localhost:3000
+[2026-06-07 20:37:38] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 20:37:38] [INFO] ──────────────────────────────────────────
+[2026-06-07 20:37:55] [INFO] POST /api/scan — request received
+[2026-06-07 20:37:55] [INFO] Validator — checking submitted URL
+[2026-06-07 20:37:55] [INFO] Validator — URL valid: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 20:37:55] [INFO] POST /api/scan — starting scan for: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 20:37:55] [INFO] Orchestrator — scan started
+[2026-06-07 20:37:55] [INFO] StatusManager — reset to pending
+[2026-06-07 20:37:55] [INFO] Orchestrator — reports folder: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55
+[2026-06-07 20:37:55] [INFO] StatusManager — clone → running
+[2026-06-07 20:37:55] [INFO] Orchestrator — cloning: https://github.com/patyalav/sast-juice-shop
+[2026-06-07 20:38:11] [INFO] Orchestrator — clone complete: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\repo
+[2026-06-07 20:38:11] [INFO] StatusManager — clone → done
+[2026-06-07 20:38:11] [INFO] Orchestrator — starting all agents in parallel
+[2026-06-07 20:38:11] [INFO] StatusManager — gitleaks → running
+[2026-06-07 20:38:11] [INFO] Gitleaks — starting scan
+[2026-06-07 20:38:11] [INFO] Gitleaks — command: gitleaks detect --source "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\repo" --report-format json --report-path "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\gitleaks-report.json" --no-git --exit-code 0
+[2026-06-07 20:38:11] [INFO] StatusManager — semgrep → running
+[2026-06-07 20:38:11] [INFO] Semgrep — starting scan
+[2026-06-07 20:38:11] [INFO] Semgrep — command: semgrep --config auto --json --output "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\semgrep-report.json" --no-git-ignore --timeout 120 "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\repo"
+[2026-06-07 20:38:11] [INFO] StatusManager — sonarqube → running
+[2026-06-07 20:38:11] [INFO] sonarqube — stub running
+[2026-06-07 20:38:11] [INFO] StatusManager — sonarqube → done | findings: 3
+[2026-06-07 20:38:11] [INFO] sonarqube — stub done | findings: 3
+[2026-06-07 20:38:11] [INFO] StatusManager — codacy → running
+[2026-06-07 20:38:11] [INFO] codacy — stub running
+[2026-06-07 20:38:11] [INFO] StatusManager — codacy → done | findings: 3
+[2026-06-07 20:38:11] [INFO] codacy — stub done | findings: 3
+[2026-06-07 20:38:19] [INFO] StatusManager — gitleaks → done | findings: 59
+[2026-06-07 20:38:19] [INFO] Gitleaks — scan complete | findings: 59
+[2026-06-07 20:41:25] [DEBUG] Semgrep — stderr:                
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 1113 files with 1059 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin      Rules                                                                
+ ─────────────────────────────        ───────────────────                                                               
+  <multilang>      76     742          Community    1059                                                                
+  ts              163     505                                                                                           
+  json              4     105                                                                                           
+  yaml             31      93                                                                                           
+  html              1      82                                                                                           
+  solidity         21      17                                                                                           
+  js              153      12                                                                                           
+  dockerfile        6       1                                                                                           
+  bash              4       1                                                                                           
+                                                                                                                        
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 42 (42 blocking)
+ • Rules run: 302
+ • Targets scanned: 1113
+ • Parsed lines: ~99.9%
+ • Scan skipped: 
+   ◦ Files larger than  files 1.0 MB: 4
+   ◦ Files matching .semgrepignore patterns: 8
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 302 rules on 1113 files: 42 findings.
+
+📢 Too many findings? Try Semgrep Pro for more powerful queries and less noise.
+   See https://sg.run/false-positives.
+
+[2026-06-07 20:41:25] [INFO] StatusManager — semgrep → done | findings: 42
+[2026-06-07 20:41:25] [INFO] Semgrep — scan complete | findings: 42
+[2026-06-07 20:41:25] [INFO] Orchestrator — all agents complete
+[2026-06-07 20:41:25] [INFO] ReportCombiner — starting
+[2026-06-07 20:41:25] [INFO] ReportCombiner — gitleaks: 59 findings
+[2026-06-07 20:41:25] [INFO] ReportCombiner — semgrep: 42 findings
+[2026-06-07 20:41:25] [INFO] ReportCombiner — sonarqube: 3 findings
+[2026-06-07 20:41:25] [INFO] ReportCombiner — codacy: 3 findings
+[2026-06-07 20:41:25] [INFO] ReportCombiner — written | total findings: 107
+[2026-06-07 20:41:25] [INFO] Orchestrator — pipeline-report.json ready | total: 107
+[2026-06-07 20:41:25] [INFO] StatusManager — cleanup → running
+[2026-06-07 20:41:26] [INFO] Cleanup — deleted: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\repo
+[2026-06-07 20:41:26] [INFO] StatusManager — cleanup → done
+[2026-06-07 20:41:26] [INFO] Scan complete — report at: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\pipeline-report.json

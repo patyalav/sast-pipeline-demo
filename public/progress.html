@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scanning — SAST Pipeline</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .step-row {
+      display         : flex;
+      align-items     : center;
+      justify-content : space-between;
+      padding         : 14px 20px;
+      border-bottom   : 1px solid var(--border-color);
+    }
+
+    .step-row:last-child { border-bottom: none; }
+
+    .step-row.running {
+      background      : #1a2236;
+    }
+
+    .step-left {
+      display         : flex;
+      align-items     : center;
+      gap             : 12px;
+    }
+
+    .step-icon {
+      font-size       : 18px;
+      width           : 24px;
+      text-align      : center;
+    }
+
+    .step-name {
+      font-size       : 14px;
+      font-weight     : 600;
+      color           : var(--text-primary);
+    }
+
+    .step-desc {
+      font-size       : 11px;
+      color           : var(--text-muted);
+      margin-top      : 2px;
+    }
+
+    .step-right {
+      display         : flex;
+      align-items     : center;
+      gap             : 8px;
+    }
+
+    .step-status {
+      font-size       : 13px;
+      font-weight     : 500;
+    }
+
+    .step-status.pending { color: var(--text-faint); }
+    .step-status.running { color: var(--warning); }
+    .step-status.done    { color: var(--success); }
+    .step-status.failed  { color: var(--error); }
+
+    .scan-meta {
+      font-size       : 12px;
+      color           : var(--text-muted);
+      margin-bottom   : 24px;
+      word-break      : break-all;
+    }
+
+    .overall-progress { margin-bottom: 20px; }
+
+    .progress-label {
+      display         : flex;
+      justify-content : space-between;
+      font-size       : 12px;
+      color           : var(--text-muted);
+      margin-bottom   : 6px;
+    }
+
+    .bottom-row {
+      display         : flex;
+      align-items     : center;
+      justify-content : space-between;
+      margin-top      : 20px;
+    }
+
+    .elapsed {
+      font-size       : 12px;
+      color           : var(--text-faint);
+    }
+
+    .divider {
+      height          : 1px;
+      background      : var(--border-color);
+      margin          : 4px 0;
+    }
+  </style>
+</head>
+<body class="page-center">
+
+<div class="container-sm">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>🔍 SAST Pipeline</h1>
+    <p>Automated security analysis across multiple tools</p>
+  </div>
+
+  <!-- Scan meta -->
+  <div class="scan-meta" id="scanMeta">Initialising scan...</div>
+
+  <!-- Overall progress -->
+  <div class="overall-progress">
+    <div class="progress-label">
+      <span>Overall Progress</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- Pipeline steps card -->
+  <div class="card" style="padding: 0;">
+
+    <!-- Clone -->
+    <div class="step-row" id="row-clone">
+      <div class="step-left">
+        <div class="step-icon">📥</div>
+        <div>
+          <div class="step-name">Clone Repository</div>
+          <div class="step-desc">Fetching source code from GitHub</div>
+        </div>
+      </div>
+      <div class="step-right">
+        <span class="status-dot pending" id="dot-clone"></span>
+        <span class="step-status pending" id="label-clone">Pending</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Gitleaks -->
+    <div class="step-row" id="row-gitleaks">
+      <div class="step-left">
+        <div class="step-icon">🔑</div>
+        <div>
+          <div class="step-name">Gitleaks</div>
+          <div class="step-desc">Secret detection</div>
+        </div>
+      </div>
+      <div class="step-right">
+        <span class="status-dot pending" id="dot-gitleaks"></span>
+        <span class="step-status pending" id="label-gitleaks">Pending</span>
+      </div>
+    </div>
+
+    <!-- Semgrep -->
+    <div class="step-row" id="row-semgrep">
+      <div class="step-left">
+        <div class="step-icon">🔎</div>
+        <div>
+          <div class="step-name">Semgrep</div>
+          <div class="step-desc">OWASP vulnerability patterns</div>
+        </div>
+      </div>
+      <div class="step-right">
+        <span class="status-dot pending" id="dot-semgrep"></span>
+        <span class="step-status pending" id="label-semgrep">Pending</span>
+      </div>
+    </div>
+
+    <!-- SonarQube -->
+    <div class="step-row" id="row-sonarqube">
+      <div class="step-left">
+        <div class="step-icon">📊</div>
+        <div>
+          <div class="step-name">SonarQube</div>
+          <div class="step-desc">Code quality &amp; security hotspots</div>
+        </div>
+      </div>
+      <div class="step-right">
+        <span class="status-dot pending" id="dot-sonarqube"></span>
+        <span class="step-status pending" id="label-sonarqube">Pending</span>
+      </div>
+    </div>
+
+    <!-- Codacy -->
+    <div class="step-row" id="row-codacy">
+      <div class="step-left">
+        <div class="step-icon">🛡️</div>
+        <div>
+          <div class="step-name">Codacy</div>
+          <div class="step-desc">Best practices &amp; complexity</div>
+        </div>
+      </div>
+      <div class="step-right">
+        <span class="status-dot pending" id="dot-codacy"></span>
+        <span class="step-status pending" id="label-codacy">Pending</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Cleanup -->
+    <div class="step-row" id="row-cleanup">
+      <div class="step-left">
+        <div class="step-icon">🧹</div>
+        <div>
+          <div class="step-name">Cleanup</div>
+          <div class="step-desc">Removing cloned repository</div>
+        </div>
+      </div>
+      <div class="step-right">
+        <span class="status-dot pending" id="dot-cleanup"></span>
+        <span class="step-status pending" id="label-cleanup">Pending</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom row — elapsed + dashboard button -->
+  <div class="bottom-row">
+    <div class="elapsed" id="elapsed">Elapsed: 0s</div>
+    <button
+      class="btn btn-primary"
+      id="btnDashboard"
+      style="display: none;"
+      onclick="window.location.href='/dashboard.html'"
+    >
+      View Dashboard →
+    </button>
+  </div>
+
+  <div class="footer">SAST Pipeline Demo — Local</div>
+
+</div>
+
+<script>
+  const TOOLS = ['gitleaks', 'semgrep', 'sonarqube', 'codacy'];
+  const STEPS = ['clone', 'cleanup'];
+
+  let pollTimer    = null;
+  let elapsedTimer = null;
+  let startTime    = Date.now();
+
+  // ── Elapsed timer ──────────────────────────────────────────────────────────
+  elapsedTimer = setInterval(() => {
+    const secs = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById('elapsed').textContent = `Elapsed: ${secs}s`;
+  }, 1000);
+
+  /**
+   * updateRow
+   * Updates status dot, label, and row highlight for one step/tool.
+   *
+   * @param {string} key  - Tool or step name
+   * @param {object} data - Status data
+   */
+  function updateRow(key, data) {
+    const dot   = document.getElementById(`dot-${key}`);
+    const label = document.getElementById(`label-${key}`);
+    const row   = document.getElementById(`row-${key}`);
+    if (!dot || !label || !row) return;
+
+    dot.className = `status-dot ${data.status}`;
+    row.className = `step-row${data.status === 'running' ? ' running' : ''}`;
+    label.className = `step-status ${data.status}`;
+
+    switch (data.status) {
+      case 'pending':
+        label.textContent = 'Pending';
+        break;
+      case 'running':
+        label.textContent = 'Running...';
+        break;
+      case 'done':
+        label.textContent = (data.findings !== null && data.findings !== undefined)
+          ? `Done — ${data.findings} findings`
+          : 'Done ✅';
+        break;
+      case 'failed':
+        label.textContent = 'Failed ✗';
+        break;
+    }
+  }
+
+  /**
+   * updateProgress
+   * Updates overall progress bar based on tool completion.
+   *
+   * @param {object} status - Full status object
+   */
+  function updateProgress(status) {
+    const done = TOOLS.filter(t =>
+      ['done', 'failed'].includes(status[t]?.status)
+    ).length;
+    const pct  = Math.round((done / TOOLS.length) * 100);
+    document.getElementById('progressBar').style.width = `${pct}%`;
+    document.getElementById('progressPct').textContent = `${pct}%`;
+  }
+
+  /**
+   * poll
+   * Fetches /api/scan/status every 2s and updates all rows.
+   */
+  async function poll() {
+    try {
+      const res  = await fetch('/api/scan/status');
+      const data = await res.json();
+
+      // Update scan meta with repo URL if available
+      const repoUrl = sessionStorage.getItem('scanRepo');
+      if (repoUrl) {
+        document.getElementById('scanMeta').textContent = `Scanning: ${repoUrl}`;
+      }
+
+      // Update all tool and step rows
+      [...TOOLS, ...STEPS].forEach(key => {
+        if (data.status[key]) updateRow(key, data.status[key]);
+      });
+
+      // Update progress bar
+      updateProgress(data.status);
+
+      // All tools done — show dashboard button
+      if (data.allDone) {
+        clearInterval(pollTimer);
+        clearInterval(elapsedTimer);
+        document.getElementById('btnDashboard').style.display = 'block';
+      }
+
+    } catch (err) {
+      console.error('Poll error:', err);
+    }
+  }
+
+  // Start polling immediately then every 2s
+  poll();
+  pollTimer = setInterval(poll, 2000);
+</script>
+
+</body>
+</html>

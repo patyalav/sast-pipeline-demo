@@ -1,36 +1,38 @@
 /**
  * statusManager.js
- * Tracks the real-time scan status of each SAST tool during a pipeline run.
+ * Tracks real-time status of pipeline steps and each SAST tool during a scan.
  *
  * ─── Responsibility ───────────────────────────────────────────────────────────
- * This file does ONE thing — maintain and expose scan status for all 4 tools.
+ * This file does ONE thing — maintain and expose scan status for the full pipeline.
  * It does NOT: run tools, call APIs, write files, or contain business logic.
  *
  * ─── Functions Exposed ────────────────────────────────────────────────────────
- * reset()                          → Resets all tools to pending state
- * setRunning(tool)                 → Marks a tool as running
+ * reset()                          → Resets all tools and pipeline steps to pending
+ * setRunning(tool)                 → Marks a tool or step as running
  * setDone(tool, findings)          → Marks a tool as done with finding count
- * setFailed(tool, errorMessage)    → Marks a tool as failed with error detail
- * getStatus()                      → Returns full status object for all tools
+ * setStepDone(step)                → Marks a pipeline step as done
+ * setFailed(tool, errorMessage)    → Marks a tool or step as failed
+ * getStatus()                      → Returns full status object
  * allDone()                        → Returns true if all tools are done or failed
  *
  * ─── Flow ─────────────────────────────────────────────────────────────────────
  *
  *   Scan starts
  *         ↓
- *   reset() — all tools set to pending
+ *   reset() — all tools + steps set to pending
  *         ↓
- *   Each tool agent calls setRunning(tool)
+ *   setRunning('clone')
+ *   setStepDone('clone')
  *         ↓
- *   Tool completes → setDone(tool, count)
- *   Tool fails     → setFailed(tool, error)
+ *   Each tool → setRunning → setDone / setFailed
  *         ↓
- *   Frontend polls /api/scan/status → getStatus() returned
+ *   setRunning('cleanup')
+ *   setStepDone('cleanup')
  *         ↓
- *   allDone() returns true → frontend redirects to dashboard
+ *   Frontend polls getStatus() → overlay updates in real time
  *
  *   ── Error scenarios ──
- *   Unknown tool name passed → logs warning, no state change
+ *   Unknown tool/step name → logs warning, no state change
  *
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -42,34 +44,43 @@ const logger = require('./logger');
 // ── Valid tool names ──────────────────────────────────────────────────────────
 const TOOLS = ['gitleaks', 'semgrep', 'sonarqube', 'codacy'];
 
+// ── Valid pipeline steps ──────────────────────────────────────────────────────
+const STEPS = ['clone', 'cleanup'];
+
 // ── In-memory status store ────────────────────────────────────────────────────
-// Single object shared across all modules via require() caching
 let status = {};
 
 /**
  * reset
- * Resets all tools to pending state — called at the start of every scan.
+ * Resets all tools and pipeline steps to pending state.
  *
  * @returns {void}
  */
 function reset() {
+  // Reset tools
   TOOLS.forEach(tool => {
-    status[tool] = { status: 'pending', findings: null, error: null };
+    status[tool] = { type: 'tool', status: 'pending', findings: null, error: null };
   });
-  logger.info('StatusManager — all tools reset to pending');
+
+  // Reset pipeline steps
+  STEPS.forEach(step => {
+    status[step] = { type: 'step', status: 'pending', error: null };
+  });
+
+  logger.info('StatusManager — reset to pending');
 }
 
 /**
  * setRunning
- * Marks a tool as currently running.
+ * Marks a tool or pipeline step as currently running.
  *
- * @param {string} tool - Tool name (gitleaks|semgrep|sonarqube|codacy)
+ * @param {string} key - Tool name or step name
  * @returns {void}
  */
-function setRunning(tool) {
-  if (!_isValid(tool)) return;
-  status[tool].status = 'running';
-  logger.info(`StatusManager — ${tool} → running`);
+function setRunning(key) {
+  if (!_isValid(key)) return;
+  status[key].status = 'running';
+  logger.info(`StatusManager — ${key} → running`);
 }
 
 /**
@@ -82,31 +93,44 @@ function setRunning(tool) {
  */
 function setDone(tool, findings) {
   if (!_isValid(tool)) return;
-  status[tool].status = 'done';
+  status[tool].status   = 'done';
   status[tool].findings = findings;
   logger.info(`StatusManager — ${tool} → done | findings: ${findings}`);
 }
 
 /**
- * setFailed
- * Marks a tool as failed with an error message.
+ * setStepDone
+ * Marks a pipeline step (clone/cleanup) as completed.
  *
- * @param {string} tool    - Tool name
+ * @param {string} step - Step name
+ * @returns {void}
+ */
+function setStepDone(step) {
+  if (!_isValid(step)) return;
+  status[step].status = 'done';
+  logger.info(`StatusManager — ${step} → done`);
+}
+
+/**
+ * setFailed
+ * Marks a tool or pipeline step as failed.
+ *
+ * @param {string} key     - Tool name or step name
  * @param {string} message - Error description
  * @returns {void}
  */
-function setFailed(tool, message) {
-  if (!_isValid(tool)) return;
-  status[tool].status = 'failed';
-  status[tool].error = message;
-  logger.error(`StatusManager — ${tool} → failed | ${message}`);
+function setFailed(key, message) {
+  if (!_isValid(key)) return;
+  status[key].status = 'failed';
+  status[key].error  = message;
+  logger.error(`StatusManager — ${key} → failed | ${message}`);
 }
 
 /**
  * getStatus
- * Returns the full status object for all tools.
+ * Returns the full status object for all tools and pipeline steps.
  *
- * @returns {object} - Status object keyed by tool name
+ * @returns {object}
  */
 function getStatus() {
   return status;
@@ -115,6 +139,7 @@ function getStatus() {
 /**
  * allDone
  * Returns true when all tools have reached a terminal state (done or failed).
+ * Pipeline steps are not included in this check.
  *
  * @returns {boolean}
  */
@@ -124,14 +149,14 @@ function allDone() {
 
 /**
  * _isValid
- * Internal guard — checks if tool name is recognised.
+ * Internal guard — checks if key is a recognised tool or step name.
  *
- * @param {string} tool - Tool name to validate
+ * @param {string} key - Tool or step name
  * @returns {boolean}
  */
-function _isValid(tool) {
-  if (!TOOLS.includes(tool)) {
-    logger.warn(`StatusManager — unknown tool: ${tool}`);
+function _isValid(key) {
+  if (![...TOOLS, ...STEPS].includes(key)) {
+    logger.warn(`StatusManager — unknown key: ${key}`);
     return false;
   }
   return true;
@@ -140,4 +165,4 @@ function _isValid(tool) {
 // Initialise on load
 reset();
 
-module.exports = { reset, setRunning, setDone, setFailed, getStatus, allDone };
+module.exports = { reset, setRunning, setDone, setStepDone, setFailed, getStatus, allDone };

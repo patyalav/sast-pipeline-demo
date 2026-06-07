@@ -15,26 +15,30 @@
  *
  *   repoUrl received
  *         ↓
- *   Reset statusManager — all tools to pending
+ *   Reset statusManager — all tools + steps to pending
  *         ↓
  *   Create timestamped reports folder
  *         ↓
+ *   setRunning('clone')
  *   git clone repoUrl → temp folder
+ *   setStepDone('clone')
  *         ↓
  *   Promise.all — run all 4 agents in parallel:
  *     ├── gitleaks.run(repoPath, reportsDir)
  *     ├── semgrep.run(repoPath, reportsDir)
  *     ├── sonarqube.run(repoPath, reportsDir)
- *     └── codacy.run(reportsDir)
+ *     └── codacy.run(repoPath, reportsDir)
  *         ↓
  *   combineReports(reportsDir)
  *         ↓
- *   cleanupRepo(repoPath) — always runs, even on error
+ *   setRunning('cleanup')
+ *   cleanupRepo(repoPath)
+ *   setStepDone('cleanup')
  *         ↓
  *   Return reportPath
  *
  *   ── Error scenarios ──
- *   git clone fails        → cleanup, throw error
+ *   git clone fails        → setFailed('clone'), cleanup, throw error
  *   Individual tool fails  → logged, partial report still generated
  *   combineReports fails   → cleanup, throw error
  *   cleanup fails          → logged, does not affect result
@@ -45,10 +49,10 @@
 'use strict';
 
 require('dotenv').config();
-const path    = require('path');
-const fs      = require('fs');
-const { exec } = require('child_process');
-const util    = require('util');
+const path      = require('path');
+const fs        = require('fs');
+const { exec }  = require('child_process');
+const util      = require('util');
 const execAsync = util.promisify(exec);
 
 const logger        = require('./logger');
@@ -68,9 +72,9 @@ const codacy    = require('./agents/codacy');
  * @returns {string} - Absolute path to the created folder
  */
 function getTimestampedDir() {
-  const now    = new Date();
-  const stamp  = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const dir    = path.resolve(process.env.REPORTS_DIR || './reports', stamp);
+  const now   = new Date();
+  const stamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const dir   = path.resolve(process.env.REPORTS_DIR || './reports', stamp);
   fs.mkdirSync(dir, { recursive: true });
   logger.info(`Orchestrator — reports folder: ${dir}`);
   return dir;
@@ -103,18 +107,25 @@ async function cloneRepo(repoUrl, reportsDir) {
 async function runScan(repoUrl) {
   logger.info('Orchestrator — scan started');
 
-  // ── Reset all tool statuses ───────────────────────────────────────────────
+  // ── Reset all tool and step statuses ──────────────────────────────────────
   statusManager.reset();
 
-  // ── Create timestamped reports folder ────────────────────────────────────
+  // ── Create timestamped reports folder ─────────────────────────────────────
   const reportsDir = getTimestampedDir();
   let repoPath     = null;
 
   try {
-    // ── Clone repo ──────────────────────────────────────────────────────────
-    repoPath = await cloneRepo(repoUrl, reportsDir);
+    // ── Clone repo ───────────────────────────────────────────────────────────
+    statusManager.setRunning('clone');
+    try {
+      repoPath = await cloneRepo(repoUrl, reportsDir);
+      statusManager.setStepDone('clone');
+    } catch (cloneErr) {
+      statusManager.setFailed('clone', cloneErr.message);
+      throw cloneErr;
+    }
 
-    // ── Run all 4 agents in parallel ────────────────────────────────────────
+    // ── Run all 4 agents in parallel ─────────────────────────────────────────
     // Each agent handles its own status updates and errors internally
     logger.info('Orchestrator — starting all agents in parallel');
     await Promise.all([
@@ -125,7 +136,7 @@ async function runScan(repoUrl) {
     ]);
     logger.info('Orchestrator — all agents complete');
 
-    // ── Combine reports ─────────────────────────────────────────────────────
+    // ── Combine reports ──────────────────────────────────────────────────────
     const combined = combineReports(reportsDir);
     if (!combined.success) {
       throw new Error(`Report combine failed — ${combined.reason}`);
@@ -137,10 +148,12 @@ async function runScan(repoUrl) {
   } finally {
     // ── Cleanup — always runs regardless of success or failure ───────────────
     if (repoPath) {
+      statusManager.setRunning('cleanup');
       const cleanup = cleanupRepo(repoPath);
       if (!cleanup.success) {
         logger.warn(`Orchestrator — cleanup warning: ${cleanup.reason}`);
       }
+      statusManager.setStepDone('cleanup');
     }
   }
 }

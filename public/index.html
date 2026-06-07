@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAST Pipeline Demo</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="page-center">
+
+<div class="container-sm">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>🔍 SAST Pipeline</h1>
+    <p>Automated security analysis across multiple tools</p>
+  </div>
+
+  <!-- Tool badges -->
+  <div class="tools-row">
+    <div class="tool-badge">🔑 Gitleaks</div>
+    <div class="tool-badge">🔎 Semgrep</div>
+    <div class="tool-badge">📊 SonarQube</div>
+    <div class="tool-badge">🛡️ Codacy</div>
+  </div>
+
+  <!-- Scan card -->
+  <div class="card">
+    <div class="card-title">GitHub Repository URL</div>
+    <div class="input-row">
+      <input
+        type="text"
+        id="repoUrl"
+        placeholder="https://github.com/owner/repository"
+        autocomplete="off"
+      />
+      <button class="btn btn-primary" id="btnScan" onclick="startScan()">
+        Scan
+      </button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+    <p class="hint">
+      Example: <a href="#" onclick="fillExample(event)">
+        https://github.com/patyalav/sast-juice-shop
+      </a>
+    </p>
+  </div>
+
+  <div class="footer">SAST Pipeline Demo — Local</div>
+
+</div>
+
+<script>
+  function fillExample(e) {
+    e.preventDefault();
+    document.getElementById('repoUrl').value =
+      'https://github.com/patyalav/sast-juice-shop';
+  }
+
+  async function startScan() {
+    const input   = document.getElementById('repoUrl');
+    const btn     = document.getElementById('btnScan');
+    const errorEl = document.getElementById('errorMsg');
+    const url     = input.value.trim();
+
+    errorEl.style.display = 'none';
+
+    if (!url) {
+      showError('Please enter a GitHub repository URL.');
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Starting...';
+
+    try {
+      const response = await fetch('/api/scan', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ repo: url })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showError(data.error || 'Failed to start scan. Please try again.');
+        btn.disabled    = false;
+        btn.textContent = 'Scan';
+        return;
+      }
+
+    // Save repo URL for progress page display
+    sessionStorage.setItem('scanRepo', url);
+    // Navigate to progress page
+    window.location.href = '/progress.html';
+
+    } catch (err) {
+      showError('Cannot connect to server. Is it running?');
+      btn.disabled    = false;
+      btn.textContent = 'Scan';
+    }
+  }
+
+  function showError(message) {
+    const errorEl       = document.getElementById('errorMsg');
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+  }
+
+  document.getElementById('repoUrl').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') startScan();
+  });
+</script>
+
+</body>
+</html>
