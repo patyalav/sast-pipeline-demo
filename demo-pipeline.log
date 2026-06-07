@@ -193,3 +193,38 @@
 [2026-06-07 19:05:26] [INFO] Gitleaks — command: gitleaks detect --source "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo" --report-format json --report-path "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\test-gitleaks\gitleaks-report.json" --no-git --exit-code 0
 [2026-06-07 19:05:27] [INFO] StatusManager — gitleaks → done | findings: 2
 [2026-06-07 19:05:27] [INFO] Gitleaks — scan complete | findings: 2
+[2026-06-07 19:12:18] [INFO] StatusManager — all tools reset to pending
+[2026-06-07 19:12:18] [INFO] StatusManager — semgrep → running
+[2026-06-07 19:12:18] [INFO] Semgrep — starting scan
+[2026-06-07 19:12:18] [INFO] Semgrep — command: semgrep --config auto --json --output "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\test-semgrep\semgrep-report.json" --no-git-ignore --timeout 120 "C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo"
+[2026-06-07 19:12:30] [DEBUG] Semgrep — stderr:                
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 37 files with 1059 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin      Rules                                                                
+ ─────────────────────────────        ───────────────────                                                               
+  <multilang>      60      37          Community    1059                                                                
+  json              4      14                                                                                           
+  js              153      13                                                                                           
+  html              1       3                                                                                           
+                                                                                                                        
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 11 (11 blocking)
+ • Rules run: 217
+ • Targets scanned: 37
+ • Parsed lines: ~100.0%
+ • Scan skipped: 
+   ◦ Files matching .semgrepignore patterns: 105
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 217 rules on 37 files: 11 findings.
+
+[2026-06-07 19:12:30] [INFO] StatusManager — semgrep → done | findings: 11
+[2026-06-07 19:12:30] [INFO] Semgrep — scan complete | findings: 11
