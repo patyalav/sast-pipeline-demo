@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results — SAST Pipeline</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .dashboard-header {
+      padding         : 32px 0 24px;
+      border-bottom   : 1px solid var(--border-color);
+      margin-bottom   : 32px;
+    }
+
+    .dashboard-header h1 {
+      font-size       : 24px;
+      font-weight     : 700;
+      color           : var(--text-primary);
+    }
+
+    .dashboard-header .meta {
+      font-size       : 13px;
+      color           : var(--text-muted);
+      margin-top      : 6px;
+    }
+
+    .header-actions {
+      display         : flex;
+      align-items     : center;
+      justify-content : space-between;
+      flex-wrap       : wrap;
+      gap             : 12px;
+    }
+
+    /* ── Tool section ─────────────────────────────────────────────────────── */
+    .tool-section {
+      margin-bottom   : 32px;
+    }
+
+    .tool-section-header {
+      display         : flex;
+      align-items     : center;
+      justify-content : space-between;
+      margin-bottom   : 16px;
+    }
+
+    .tool-section-title {
+      display         : flex;
+      align-items     : center;
+      gap             : 10px;
+      font-size       : 17px;
+      font-weight     : 700;
+      color           : var(--text-primary);
+    }
+
+    .tool-section-title .icon { font-size: 20px; }
+
+    .tool-finding-count {
+      font-size       : 13px;
+      color           : var(--text-muted);
+      font-weight     : 400;
+    }
+
+    .severity-summary {
+      display         : flex;
+      gap             : 8px;
+      flex-wrap       : wrap;
+    }
+
+    .sev-chip {
+      font-size       : 12px;
+      padding         : 3px 10px;
+      border-radius   : 12px;
+      font-weight     : 600;
+    }
+
+    /* ── No findings ──────────────────────────────────────────────────────── */
+    .no-findings {
+      text-align      : center;
+      padding         : 24px;
+      color           : var(--text-muted);
+      font-size       : 13px;
+    }
+
+    /* ── Skipped tool ─────────────────────────────────────────────────────── */
+    .tool-skipped {
+      text-align      : center;
+      padding         : 16px;
+      color           : var(--text-faint);
+      font-size       : 12px;
+      font-style      : italic;
+    }
+
+    /* ── Loading / error ──────────────────────────────────────────────────── */
+    .loading {
+      text-align      : center;
+      padding         : 60px 24px;
+      color           : var(--text-muted);
+      font-size       : 15px;
+    }
+
+    .load-error {
+      text-align      : center;
+      padding         : 40px 24px;
+      color           : var(--error);
+      font-size       : 14px;
+    }
+
+    /* ── Truncate long text ───────────────────────────────────────────────── */
+    .truncate {
+      max-width       : 300px;
+      white-space     : nowrap;
+      overflow        : hidden;
+      text-overflow   : ellipsis;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" style="padding-top: 0; padding-bottom: 40px;">
+
+  <!-- Loading state -->
+  <div class="loading" id="loadingState">
+    ⏳ Loading report...
+  </div>
+
+  <!-- Error state -->
+  <div class="load-error" id="errorState" style="display:none;">
+    ❌ Failed to load report. <a href="/">Start a new scan</a>
+  </div>
+
+  <!-- Dashboard content — hidden until report loads -->
+  <div id="dashboardContent" style="display:none;">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-actions">
+        <div>
+          <h1>📋 Scan Results</h1>
+          <div class="meta" id="reportMeta">—</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="window.location.href='/'">
+            ← New Scan
+          </button>
+          <button class="btn btn-primary" id="btnDownload" onclick="downloadReport()">
+            📥 Download Report
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary stat boxes -->
+    <div class="stat-grid" id="statGrid"></div>
+
+    <!-- Tool sections -->
+    <div id="toolSections"></div>
+
+    <div class="footer">SAST Pipeline Demo — Local</div>
+
+  </div>
+
+</div>
+
+<script>
+  let reportData = null;
+
+  // ── Tool config — display order, icon, label ───────────────────────────────
+  const TOOL_CONFIG = {
+    gitleaks  : { icon: '🔑', label: 'Gitleaks',   desc: 'Secret Detection' },
+    semgrep   : { icon: '🔎', label: 'Semgrep',    desc: 'OWASP Vulnerability Patterns' },
+    sonarqube : { icon: '📊', label: 'SonarQube',  desc: 'Code Quality & Security' },
+    codacy    : { icon: '🛡️', label: 'Codacy',     desc: 'Best Practices & Complexity' }
+  };
+
+  const TOOL_ORDER = ['gitleaks', 'semgrep', 'sonarqube', 'codacy'];
+
+  // ── Severity pill class mapping ────────────────────────────────────────────
+  const PILL_CLASS = {
+    // Gitleaks
+    'Secret'   : 'pill pill-secret',
+    // Semgrep
+    'ERROR'    : 'pill pill-error',
+    'WARNING'  : 'pill pill-warning',
+    'INFO'     : 'pill pill-info',
+    // SonarQube
+    'BLOCKER'  : 'pill pill-blocker',
+    'CRITICAL' : 'pill pill-critical',
+    'MAJOR'    : 'pill pill-high',
+    'MINOR'    : 'pill pill-low',
+    // Codacy
+    'High'     : 'pill pill-high',
+    'Medium'   : 'pill pill-medium',
+    'Low'      : 'pill pill-low'
+  };
+
+  /**
+   * getPillClass
+   * Returns CSS class for a severity label.
+   *
+   * @param {string} sev - Severity string
+   * @returns {string}
+   */
+  function getPillClass(sev) {
+    return PILL_CLASS[sev] || 'pill pill-info';
+  }
+
+  /**
+   * loadReport
+   * Fetches pipeline-report.json from /api/scan/report and renders dashboard.
+   */
+  async function loadReport() {
+    try {
+      const res = await fetch('/api/scan/report');
+      if (!res.ok) throw new Error('Report not ready');
+      reportData = await res.json();
+      renderDashboard(reportData);
+    } catch (err) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display  = 'block';
+    }
+  }
+
+  /**
+   * renderDashboard
+   * Renders the full dashboard from report data.
+   *
+   * @param {object} report - pipeline-report.json content
+   */
+  function renderDashboard(report) {
+    // ── Meta ────────────────────────────────────────────────────────────────
+    const date = new Date(report.generatedAt).toLocaleString();
+    document.getElementById('reportMeta').textContent =
+      `Generated: ${date}  |  Total Findings: ${report.totalFindings}`;
+
+    // ── Stat boxes ───────────────────────────────────────────────────────────
+    const statGrid = document.getElementById('statGrid');
+    statGrid.innerHTML = '';
+
+    // Total findings box
+    statGrid.innerHTML += statBox(report.totalFindings, 'Total Findings', '#6366f1');
+
+    // Per-tool boxes
+    TOOL_ORDER.forEach(tool => {
+      const t      = report.tools[tool];
+      const config = TOOL_CONFIG[tool];
+      if (!t) return;
+      statGrid.innerHTML += statBox(
+        t.findingCount,
+        `${config.icon} ${config.label}`,
+        t.status === 'skipped' ? 'var(--text-faint)' : 'var(--text-primary)'
+      );
+    });
+
+    // ── Tool sections ────────────────────────────────────────────────────────
+    const toolSections = document.getElementById('toolSections');
+    toolSections.innerHTML = '';
+
+    TOOL_ORDER.forEach(tool => {
+      toolSections.innerHTML += renderToolSection(tool, report.tools[tool]);
+    });
+
+    // ── Show dashboard ───────────────────────────────────────────────────────
+    document.getElementById('loadingState').style.display    = 'none';
+    document.getElementById('dashboardContent').style.display = 'block';
+  }
+
+  /**
+   * statBox
+   * Returns HTML for a summary stat box.
+   *
+   * @param {number} count - Number to display
+   * @param {string} label - Label text
+   * @param {string} color - Color for the number
+   * @returns {string}
+   */
+  function statBox(count, label, color) {
+    return `
+      <div class="stat-box">
+        <div class="stat-number" style="color:${color}">${count}</div>
+        <div class="stat-label">${label}</div>
+      </div>`;
+  }
+
+  /**
+   * renderToolSection
+   * Returns HTML for one tool's findings section.
+   *
+   * @param {string} tool   - Tool name
+   * @param {object} data   - Tool data from report
+   * @returns {string}
+   */
+  function renderToolSection(tool, data) {
+    const config = TOOL_CONFIG[tool];
+    if (!data) return '';
+
+    // ── Severity summary chips ────────────────────────────────────────────
+    let severityHtml = '';
+    if (data.severityBreakdown && Object.keys(data.severityBreakdown).length > 0) {
+      severityHtml = Object.entries(data.severityBreakdown)
+        .map(([sev, count]) =>
+          `<span class="${getPillClass(sev)} sev-chip">${sev}: ${count}</span>`)
+        .join('');
+    }
+
+    // ── Findings table ────────────────────────────────────────────────────
+    let tableHtml = '';
+    if (data.status === 'skipped') {
+      tableHtml = `<div class="tool-skipped">Tool was skipped — no report available</div>`;
+    } else if (!data.findings || data.findings.length === 0) {
+      tableHtml = `<div class="no-findings">✅ No findings detected</div>`;
+    } else {
+      tableHtml = `
+        <table class="findings-table">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>File</th>
+              <th>Line</th>
+              <th>Rule / Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.findings.map(f => renderFindingRow(tool, f)).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    return `
+      <div class="tool-section">
+        <div class="tool-section-header">
+          <div class="tool-section-title">
+            <span class="icon">${config.icon}</span>
+            ${config.label}
+            <span class="tool-finding-count">${config.desc}</span>
+          </div>
+          <div class="severity-summary">${severityHtml}</div>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden;">
+          ${tableHtml}
+        </div>
+      </div>`;
+  }
+
+  /**
+   * renderFindingRow
+   * Returns HTML for one finding row — handles each tool's native fields.
+   *
+   * @param {string} tool     - Tool name
+   * @param {object} finding  - Raw finding object
+   * @returns {string}
+   */
+  function renderFindingRow(tool, finding) {
+    let severity = '';
+    let file     = '';
+    let line     = '';
+    let message  = '';
+
+    switch (tool) {
+      case 'gitleaks':
+        severity = 'Secret';
+        file     = finding.File     || '—';
+        line     = finding.StartLine || '—';
+        message  = finding.RuleID   || '—';
+        break;
+
+      case 'semgrep':
+        severity = finding?.extra?.severity || 'INFO';
+        file     = finding.path             || '—';
+        line     = finding?.start?.line     || '—';
+        message  = finding?.extra?.message  || finding.check_id || '—';
+        break;
+
+      case 'sonarqube':
+        severity = finding.severity   || '—';
+        file     = finding.component  || '—';
+        line     = finding.line       || '—';
+        message  = finding.message    || finding.rule || '—';
+        break;
+
+      case 'codacy':
+        severity = finding?.patternInfo?.level || '—';
+        file     = finding.filePath            || '—';
+        line     = finding.lineNumber          || '—';
+        message  = finding.message             || '—';
+        break;
+    }
+
+    // Shorten long file paths — show only last 2 segments
+    const shortFile = file.split(/[\\/]/).slice(-2).join('/');
+
+    return `
+      <tr>
+        <td><span class="${getPillClass(severity)}">${severity}</span></td>
+        <td><span class="file-path truncate" title="${file}">${shortFile}</span></td>
+        <td>${line}</td>
+        <td class="truncate" title="${message}">${message}</td>
+      </tr>`;
+  }
+
+  /**
+   * downloadReport
+   * Triggers download of pipeline-report.json.
+   */
+  function downloadReport() {
+    if (!reportData) return;
+    const blob = new Blob(
+      [JSON.stringify(reportData, null, 2)],
+      { type: 'application/json' }
+    );
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `pipeline-report-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Load report on page load
+  loadReport();
+</script>
+
+</body>
+</html>

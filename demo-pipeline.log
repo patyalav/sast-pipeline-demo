@@ -331,3 +331,15 @@ Ran 302 rules on 1113 files: 42 findings.
 [2026-06-07 20:41:26] [INFO] Cleanup — deleted: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\repo
 [2026-06-07 20:41:26] [INFO] StatusManager — cleanup → done
 [2026-06-07 20:41:26] [INFO] Scan complete — report at: C:\_WorkingFolder\GITHUB_PROJECTS_AVI\sast-pipeline-demo\reports\2026-06-07T15-07-55\pipeline-report.json
+[2026-06-07 20:48:29] [INFO] StatusManager — reset to pending
+[2026-06-07 20:48:29] [INFO] SonarQube health check — http://localhost:9000/api/system/status
+[2026-06-07 20:48:29] [INFO] SonarQube health check — UP ✅
+[2026-06-07 20:48:29] [INFO] ──────────────────────────────────────────
+[2026-06-07 20:48:29] [INFO] SAST Pipeline Demo — server started
+[2026-06-07 20:48:29] [INFO] URL      : http://localhost:3000
+[2026-06-07 20:48:29] [INFO] Health   : http://localhost:3000/health
+[2026-06-07 20:48:29] [INFO] ──────────────────────────────────────────
+[2026-06-07 20:48:37] [WARN] GET /api/scan/report — report not ready yet
+[2026-06-07 20:48:42] [WARN] GET /api/scan/report — report not ready yet
+[2026-06-07 20:48:43] [WARN] GET /api/scan/report — report not ready yet
+[2026-06-07 20:48:56] [WARN] GET /api/scan/report — report not ready yet
