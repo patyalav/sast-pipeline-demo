@@ -67,7 +67,7 @@ async function run(repoPath, reportsDir) {
   // --output             — write JSON to file
   // --no-git-ignore      — scan all files including gitignored ones
   // --timeout 120        — 2 min timeout per rule (prevents hanging)
-  const cmd = `semgrep --config auto --json --output "${reportFile}" --no-git-ignore --timeout 120 "${repoPath}"`;
+  const cmd = `semgrep --config auto --json --output "${reportFile}" --timeout 120 "${repoPath}"`;
 
   logger.info(`Semgrep — command: ${cmd}`);
 

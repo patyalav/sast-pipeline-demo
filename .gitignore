@@ -1,3 +1,4 @@
 node_modules/
 .env
 reports/
+demo-pipeline.log
