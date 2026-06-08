@@ -3,7 +3,7 @@
  * Coordinates the full SAST scan pipeline for a given GitHub repository.
  *
  * ─── Responsibility ───────────────────────────────────────────────────────────
- * This file does ONE thing — run all 4 tool agents in parallel and combine results.
+ * This file does ONE thing — run all 4 tool agents sequentially and combine results.
  * It does NOT: implement tool logic, validate URLs, or serve HTTP responses.
  *
  * ─── Functions Exposed ────────────────────────────────────────────────────────
@@ -23,11 +23,11 @@
  *   git clone repoUrl → temp folder
  *   setStepDone('clone')
  *         ↓
- *   Promise.all — run all 4 agents in parallel:
- *     ├── gitleaks.run(repoPath, reportsDir)
- *     ├── semgrep.run(repoPath, reportsDir)
- *     ├── sonarqube.run(repoPath, reportsDir)
- *     └── codacy.run(repoPath, reportsDir)
+ *   Sequential execution — 5s delay between each tool:
+ *     1. gitleaks.run(repoPath, reportsDir)  → 5s delay
+ *     2. semgrep.run(repoPath, reportsDir)   → 5s delay
+ *     3. sonarqube.run(repoPath, reportsDir) → 5s delay
+ *     4. codacy.run(repoPath, reportsDir)
  *         ↓
  *   combineReports(reportsDir)
  *         ↓
@@ -66,6 +66,17 @@ const sonarqube = require('./agents/sonarqube');
 const codacy    = require('./agents/codacy');
 
 /**
+ * delay
+ * Pauses execution for a given number of milliseconds.
+ *
+ * @param {number} ms - Milliseconds to wait
+ * @returns {Promise<void>}
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * getTimestampedDir
  * Creates a timestamped reports folder for this scan run.
  *
@@ -98,7 +109,8 @@ async function cloneRepo(repoUrl, reportsDir) {
 
 /**
  * runScan
- * Main pipeline entry point — clones repo, runs all agents, combines reports.
+ * Main pipeline entry point — clones repo, runs all agents sequentially,
+ * combines reports and cleans up.
  *
  * @param {string} repoUrl - Validated GitHub repo URL
  * @returns {string}       - Path to pipeline-report.json
@@ -125,15 +137,21 @@ async function runScan(repoUrl) {
       throw cloneErr;
     }
 
-    // ── Run all 4 agents in parallel ─────────────────────────────────────────
-    // Each agent handles its own status updates and errors internally
-    logger.info('Orchestrator — starting all agents in parallel');
-    await Promise.all([
-      gitleaks.run(repoPath, reportsDir),
-      semgrep.run(repoPath, reportsDir),
-      sonarqube.run(repoPath, reportsDir),
-      codacy.run(repoPath, reportsDir)
-    ]);
+    // ── Run all 4 agents sequentially ────────────────────────────────────────
+    // 5s delay between tools — makes progress visible on frontend
+    logger.info('Orchestrator — starting agents sequentially');
+
+    await gitleaks.run(repoPath, reportsDir);
+    await delay(2000);
+
+    await semgrep.run(repoPath, reportsDir);
+    await delay(2000);
+
+    await sonarqube.run(repoPath, reportsDir);
+    await delay(2000);
+
+    await codacy.run(repoPath, reportsDir);
+
     logger.info('Orchestrator — all agents complete');
 
     // ── Combine reports ──────────────────────────────────────────────────────
