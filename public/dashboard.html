@@ -117,7 +117,7 @@
 </head>
 <body>
 
-<div class="container" style="padding-top: 0; padding-bottom: 40px;">
+<div class="container" style="padding-top: 0; padding-bottom: 40px; margin: 0 auto;">
 
   <!-- Loading state -->
   <div class="loading" id="loadingState">
@@ -168,10 +168,10 @@
 
   // ── Tool config — display order, icon, label ───────────────────────────────
   const TOOL_CONFIG = {
-    gitleaks  : { icon: '🔑', label: 'Gitleaks',   desc: 'Secret Detection' },
-    semgrep   : { icon: '🔎', label: 'Semgrep',    desc: 'OWASP Vulnerability Patterns' },
-    sonarqube : { icon: '📊', label: 'SonarQube',  desc: 'Code Quality & Security' },
-    codacy    : { icon: '🛡️', label: 'Codacy',     desc: 'Best Practices & Complexity' }
+    gitleaks  : { icon: '🔑', label: 'Secret Detection',                desc: 'Hardcoded secrets and credentials' },
+    semgrep   : { icon: '🛡️', label: 'OWASP Vulnerability Analysis',   desc: 'Injection, XSS, and OWASP Top 10' },
+    sonarqube : { icon: '📊', label: 'Code Quality & Security Hotspots', desc: 'Bugs, complexity, and security risks' },
+    codacy    : { icon: '📉', label: 'Technical Debt',                  desc: 'Unused code, duplications, bad practices' }
   };
 
   const TOOL_ORDER = ['gitleaks', 'semgrep', 'sonarqube', 'codacy'];

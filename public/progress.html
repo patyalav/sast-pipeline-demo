@@ -24,18 +24,28 @@
       display         : flex;
       align-items     : center;
       gap             : 12px;
+      flex            : 1;
     }
 
     .step-icon {
       font-size       : 18px;
-      width           : 24px;
+      width           : 28px;
       text-align      : center;
+      flex-shrink     : 0;
+    }
+
+    .step-text {
+      flex            : 1;
+      min-width       : 0;
     }
 
     .step-name {
       font-size       : 14px;
       font-weight     : 600;
       color           : var(--text-primary);
+      white-space     : nowrap;
+      overflow        : hidden;
+      text-overflow   : ellipsis;
     }
 
     .step-desc {
@@ -48,11 +58,14 @@
       display         : flex;
       align-items     : center;
       gap             : 8px;
+      flex-shrink     : 0;
+      margin-left     : 16px;
     }
 
     .step-status {
       font-size       : 13px;
       font-weight     : 500;
+      white-space     : nowrap;
     }
 
     .step-status.pending { color: var(--text-faint); }
@@ -98,7 +111,7 @@
 </head>
 <body class="page-center">
 
-<div class="container-sm">
+<div class="container" style="max-width: 680px;">
 
   <!-- Header -->
   <div class="page-header">
@@ -127,7 +140,7 @@
     <div class="step-row" id="row-clone">
       <div class="step-left">
         <div class="step-icon">📥</div>
-        <div>
+        <div class="step-text">
           <div class="step-name">Clone Repository</div>
           <div class="step-desc">Fetching source code from GitHub</div>
         </div>
@@ -140,13 +153,13 @@
 
     <div class="divider"></div>
 
-    <!-- Gitleaks -->
+    <!-- Gitleaks — Secret Detection -->
     <div class="step-row" id="row-gitleaks">
       <div class="step-left">
         <div class="step-icon">🔑</div>
-        <div>
-          <div class="step-name">Gitleaks</div>
-          <div class="step-desc">Secret detection</div>
+        <div class="step-text">
+          <div class="step-name">Secret Detection</div>
+          <div class="step-desc">Scanning for hardcoded secrets and credentials</div>
         </div>
       </div>
       <div class="step-right">
@@ -155,13 +168,13 @@
       </div>
     </div>
 
-    <!-- Semgrep -->
+    <!-- Semgrep — OWASP Vulnerability Analysis -->
     <div class="step-row" id="row-semgrep">
       <div class="step-left">
-        <div class="step-icon">🔎</div>
-        <div>
-          <div class="step-name">Semgrep</div>
-          <div class="step-desc">OWASP vulnerability patterns</div>
+        <div class="step-icon">🛡️</div>
+        <div class="step-text">
+          <div class="step-name">OWASP Vulnerability Analysis</div>
+          <div class="step-desc">Scanning for injection, XSS, and OWASP Top 10</div>
         </div>
       </div>
       <div class="step-right">
@@ -170,13 +183,13 @@
       </div>
     </div>
 
-    <!-- SonarQube -->
+    <!-- SonarQube — Code Quality & Security Hotspots -->
     <div class="step-row" id="row-sonarqube">
       <div class="step-left">
         <div class="step-icon">📊</div>
-        <div>
-          <div class="step-name">SonarQube</div>
-          <div class="step-desc">Code quality &amp; security hotspots</div>
+        <div class="step-text">
+          <div class="step-name">Code Quality & Security Hotspots</div>
+          <div class="step-desc">Bugs, complexity and security risks</div>
         </div>
       </div>
       <div class="step-right">
@@ -185,13 +198,13 @@
       </div>
     </div>
 
-    <!-- Codacy -->
+    <!-- Codacy — Technical Debt -->
     <div class="step-row" id="row-codacy">
       <div class="step-left">
-        <div class="step-icon">🛡️</div>
-        <div>
-          <div class="step-name">Codacy</div>
-          <div class="step-desc">Best practices &amp; complexity</div>
+        <div class="step-icon">📉</div>
+        <div class="step-text">
+          <div class="step-name">Technical Debt</div>
+          <div class="step-desc">Unused code, duplications and bad practices</div>
         </div>
       </div>
       <div class="step-right">
@@ -206,7 +219,7 @@
     <div class="step-row" id="row-cleanup">
       <div class="step-left">
         <div class="step-icon">🧹</div>
-        <div>
+        <div class="step-text">
           <div class="step-name">Cleanup</div>
           <div class="step-desc">Removing cloned repository</div>
         </div>
@@ -263,8 +276,8 @@
     const row   = document.getElementById(`row-${key}`);
     if (!dot || !label || !row) return;
 
-    dot.className = `status-dot ${data.status}`;
-    row.className = `step-row${data.status === 'running' ? ' running' : ''}`;
+    dot.className   = `status-dot ${data.status}`;
+    row.className   = `step-row${data.status === 'running' ? ' running' : ''}`;
     label.className = `step-status ${data.status}`;
 
     switch (data.status) {
