@@ -32,10 +32,7 @@
       gap             : 12px;
     }
 
-    /* ── Tool section ─────────────────────────────────────────────────────── */
-    .tool-section {
-      margin-bottom   : 32px;
-    }
+    .tool-section       { margin-bottom: 32px; }
 
     .tool-section-header {
       display         : flex;
@@ -74,7 +71,6 @@
       font-weight     : 600;
     }
 
-    /* ── No findings ──────────────────────────────────────────────────────── */
     .no-findings {
       text-align      : center;
       padding         : 24px;
@@ -82,7 +78,6 @@
       font-size       : 13px;
     }
 
-    /* ── Skipped tool ─────────────────────────────────────────────────────── */
     .tool-skipped {
       text-align      : center;
       padding         : 16px;
@@ -91,7 +86,6 @@
       font-style      : italic;
     }
 
-    /* ── Loading / error ──────────────────────────────────────────────────── */
     .loading {
       text-align      : center;
       padding         : 60px 24px;
@@ -106,33 +100,124 @@
       font-size       : 14px;
     }
 
-    /* ── Truncate long text ───────────────────────────────────────────────── */
     .truncate {
-      max-width       : 300px;
+      max-width       : 240px;
       white-space     : nowrap;
       overflow        : hidden;
       text-overflow   : ellipsis;
     }
+
+    /* ── Action buttons in finding row ───────────────────────────────────── */
+    .btn-finding {
+      font-size       : 11px;
+      padding         : 3px 9px;
+      border          : 1px solid var(--border-color);
+      border-radius   : 5px;
+      background      : transparent;
+      color           : var(--text-muted);
+      cursor          : pointer;
+      white-space     : nowrap;
+      transition      : all 0.15s;
+    }
+
+    .btn-finding:hover {
+      border-color    : var(--accent);
+      color           : var(--accent);
+    }
+
+    .btn-ticket:hover {
+      border-color    : #f59e0b;
+      color           : #f59e0b;
+    }
+
+    /* ── Details dropdown row ────────────────────────────────────────────── */
+    .detail-row {
+      display         : none;
+      background      : #131926;
+    }
+
+    .detail-row.open {
+      display         : table-row;
+    }
+
+    .detail-cell {
+      padding         : 14px 20px !important;
+      border-bottom   : 1px solid var(--border-color);
+    }
+
+    .detail-grid {
+      display         : grid;
+      grid-template-columns: 120px 1fr;
+      gap             : 6px 16px;
+      font-size       : 12px;
+    }
+
+    .detail-label {
+      color           : var(--text-muted);
+      font-weight     : 600;
+      text-transform  : uppercase;
+      font-size       : 10px;
+      letter-spacing  : 0.5px;
+      padding-top     : 2px;
+    }
+
+    .detail-value {
+      color           : var(--text-secondary);
+      line-height     : 1.5;
+    }
+
+    .detail-value.mono {
+      font-family     : 'Courier New', monospace;
+      font-size       : 11px;
+      color           : var(--text-muted);
+    }
+
+    .detail-value.fix {
+      color           : #22c55e;
+    }
+
+    /* ── JIRA Toast ──────────────────────────────────────────────────────── */
+    .toast {
+      position        : fixed;
+      bottom          : 28px;
+      right           : 28px;
+      background      : #1e293b;
+      border          : 1px solid #334155;
+      border-radius   : 10px;
+      padding         : 14px 20px;
+      font-size       : 13px;
+      color           : #22c55e;
+      display         : flex;
+      align-items     : center;
+      gap             : 10px;
+      z-index         : 999;
+      box-shadow      : 0 4px 20px rgba(0,0,0,0.4);
+      transform       : translateY(80px);
+      opacity         : 0;
+      transition      : all 0.3s ease;
+      max-width       : 420px;
+    }
+
+    .toast.show {
+      transform       : translateY(0);
+      opacity         : 1;
+    }
+
+    .toast-icon { font-size: 16px; }
   </style>
 </head>
 <body>
 
 <div class="container" style="padding-top: 0; padding-bottom: 40px; margin: 0 auto;">
 
-  <!-- Loading state -->
-  <div class="loading" id="loadingState">
-    ⏳ Loading report...
-  </div>
+  <div class="loading" id="loadingState">⏳ Loading report...</div>
 
-  <!-- Error state -->
   <div class="load-error" id="errorState" style="display:none;">
     ❌ Failed to load report. <a href="/">Start a new scan</a>
   </div>
 
-  <!-- Dashboard content — hidden until report loads -->
   <div id="dashboardContent" style="display:none;">
 
-    <!-- Header -->
     <div class="dashboard-header">
       <div class="header-actions">
         <div>
@@ -143,7 +228,7 @@
           <button class="btn btn-secondary" onclick="window.location.href='/'">
             ← New Scan
           </button>
-          <!-- Download button — hidden for demo, enable when needed -->
+          <!-- Download button — hidden for demo -->
           <!-- <button class="btn btn-primary" id="btnDownload" onclick="downloadReport()">
             📥 Download Report
           </button> -->
@@ -151,65 +236,153 @@
       </div>
     </div>
 
-    <!-- Summary stat boxes -->
     <div class="stat-grid" id="statGrid"></div>
-
-    <!-- Tool sections -->
     <div id="toolSections"></div>
-
     <div class="footer">SAST Pipeline Demo — Local</div>
 
   </div>
 
 </div>
 
-<script>
-  let reportData = null;
+<!-- JIRA Toast -->
+<div class="toast" id="jiraToast">
+  <span id="toastMsg">JIRA ticket created</span>
+</div>
 
-  // ── Tool config — display order, icon, label ───────────────────────────────
+<script>
+  let reportData  = null;
+  let ticketCount = 100;
+
+  // ── Tool config ────────────────────────────────────────────────────────────
   const TOOL_CONFIG = {
-    gitleaks  : { icon: '🔑', label: 'Secret Detection',                desc: 'Hardcoded secrets and credentials' },
-    semgrep   : { icon: '🛡️', label: 'OWASP Vulnerability Analysis',   desc: 'Injection, XSS, and OWASP Top 10' },
+    gitleaks  : { icon: '🔑', label: 'Secret Detection',                 desc: 'Hardcoded secrets and credentials' },
+    semgrep   : { icon: '🛡️', label: 'OWASP Vulnerability Analysis',    desc: 'OWASP Top 10 & AI Hallucination Risks' },
     sonarqube : { icon: '📊', label: 'Code Quality & Security Hotspots', desc: 'Bugs, complexity, and security risks' },
-    codacy    : { icon: '📉', label: 'Technical Debt',                  desc: 'Unused code, duplications, bad practices' }
+    codacy    : { icon: '📉', label: 'Technical Debt',                   desc: 'Unused code, duplications, bad practices' }
   };
 
   const TOOL_ORDER = ['gitleaks', 'semgrep', 'sonarqube', 'codacy'];
 
-  // ── Severity pill class mapping ────────────────────────────────────────────
-  const PILL_CLASS = {
+  // ── Fix suggestions — mapped by rule ID / pattern ─────────────────────────
+  const FIX_MAP = {
     // Gitleaks
-    'Secret'   : 'pill pill-secret',
+    'generic-api-key'            : 'Remove from source code. Store in environment variable: process.env.API_KEY',
+    'mailgun-private-api-token'  : 'Rotate the Mailgun API token immediately. Store new token in .env file.',
+    'twilio-api-key'             : 'Rotate the Twilio key immediately. Load via process.env.TWILIO_AUTH_TOKEN',
+    'slack-webhook-url'          : 'Regenerate the Slack webhook in workspace settings. Store URL in .env file.',
     // Semgrep
-    'ERROR'    : 'pill pill-error',
-    'WARNING'  : 'pill pill-warning',
-    'INFO'     : 'pill pill-info',
+    'javascript.sqli'            : 'Use parameterised queries: db.query("SELECT * FROM users WHERE id = ?", [id])',
+    'javascript.xss'             : 'Use res.render() with a template engine instead of res.send() with raw HTML.',
+    'javascript.eval'            : 'Remove eval() entirely. Use JSON.parse() for data or redesign the logic.',
+    'javascript.crypto'          : 'Replace MD5 with bcrypt: const hash = await bcrypt.hash(password, 12)',
     // SonarQube
-    'BLOCKER'  : 'pill pill-blocker',
-    'CRITICAL' : 'pill pill-critical',
-    'MAJOR'    : 'pill pill-high',
-    'MINOR'    : 'pill pill-low',
+    'javascript:S2077'           : 'Use parameterised queries — never concatenate user input into SQL strings.',
+    'javascript:S2068'           : 'Remove hardcoded password. Load from environment: process.env.DB_PASSWORD',
+    'javascript:S3776'           : 'Break function into smaller focused functions. Maximum nesting depth: 3 levels.',
+    'javascript:S1481'           : 'Remove unused variable declaration — it is dead code.',
     // Codacy
-    'High'     : 'pill pill-high',
-    'Medium'   : 'pill pill-medium',
-    'Low'      : 'pill pill-low'
+    'sql-injection'              : 'Use parameterised queries — never concatenate user input into SQL strings.',
+    'no-eval'                    : 'Remove eval() entirely. Redesign logic to avoid dynamic code execution.',
+    'no-empty-catch'             : 'Always log or handle caught errors: catch(err) { logger.error(err.message); }',
+    'no-unused-vars'             : 'Remove unused variable declaration — it is dead code.',
+    'xss-direct-write'           : 'Use res.render() with auto-escaping template engine instead of res.send().'
   };
 
-  /**
-   * getPillClass
-   * Returns CSS class for a severity label.
-   *
-   * @param {string} sev - Severity string
-   * @returns {string}
-   */
+  // ── Default fix if rule not in map ────────────────────────────────────────
+  function getFix(ruleId) {
+    if (!ruleId) return 'Review finding and apply appropriate remediation.';
+    const key = Object.keys(FIX_MAP).find(k =>
+      ruleId.toLowerCase().includes(k.toLowerCase()) ||
+      k.toLowerCase().includes(ruleId.toLowerCase())
+    );
+    return key ? FIX_MAP[key] : 'Review the finding and apply appropriate remediation based on the rule description.';
+  }
+
+  // ── Severity pill ──────────────────────────────────────────────────────────
+  const PILL_CLASS = {
+    'Secret'  : 'pill pill-secret',
+    'ERROR'   : 'pill pill-error',
+    'WARNING' : 'pill pill-warning',
+    'INFO'    : 'pill pill-info',
+    'BLOCKER' : 'pill pill-blocker',
+    'CRITICAL': 'pill pill-critical',
+    'MAJOR'   : 'pill pill-high',
+    'MINOR'   : 'pill pill-low',
+    'High'    : 'pill pill-high',
+    'Medium'  : 'pill pill-medium',
+    'Low'     : 'pill pill-low'
+  };
+
   function getPillClass(sev) {
     return PILL_CLASS[sev] || 'pill pill-info';
   }
 
-  /**
-   * loadReport
-   * Fetches pipeline-report.json from /api/scan/report and renders dashboard.
-   */
+  // ── Extract normalised fields from each tool's native format ───────────────
+  function extractFields(tool, finding) {
+    switch (tool) {
+      case 'gitleaks':
+        return {
+          severity : 'Secret',
+          file     : finding.File      || '—',
+          line     : finding.StartLine  || '—',
+          message  : `Secret detected — ${finding.RuleID || '—'}`,
+          ruleId   : finding.RuleID    || '—',
+          findingId: finding.Fingerprint || '—'
+        };
+      case 'semgrep':
+        return {
+          severity : finding?.extra?.severity || 'INFO',
+          file     : finding.path             || '—',
+          line     : finding?.start?.line      || '—',
+          message  : finding?.extra?.message   || '—',
+          ruleId   : finding.check_id          || '—',
+          findingId: `${finding.check_id}:${finding.path}:${finding?.start?.line}`
+        };
+      case 'sonarqube':
+        return {
+          severity : finding.severity  || '—',
+          file     : finding.component || '—',
+          line     : finding.line      || '—',
+          message  : finding.message   || '—',
+          ruleId   : finding.rule      || '—',
+          findingId: finding.key       || '—'
+        };
+      case 'codacy':
+        return {
+          severity : finding?.patternInfo?.level   || '—',
+          file     : finding.filePath               || '—',
+          line     : finding.lineNumber             || '—',
+          message  : finding.message                || '—',
+          ruleId   : finding?.patternInfo?.patternId || '—',
+          findingId: finding.issueId                || '—'
+        };
+      default:
+        return { severity: '—', file: '—', line: '—', message: '—', ruleId: '—', findingId: '—' };
+    }
+  }
+
+  // ── Toggle details row ────────────────────────────────────────────────────
+  function toggleDetail(id) {
+    const row = document.getElementById(`detail-${id}`);
+    if (!row) return;
+    row.classList.toggle('open');
+    const btn = document.getElementById(`btn-detail-${id}`);
+    if (btn) btn.textContent = row.classList.contains('open') ? 'Details ▴' : 'Details ▾';
+  }
+
+  // ── JIRA toast ────────────────────────────────────────────────────────────
+  function createTicket(message) {
+    ticketCount++;
+    const ticketId  = `SAST-${ticketCount}`;
+    const shortMsg  = message.length > 50 ? message.substring(0, 50) + '...' : message;
+    const toast     = document.getElementById('jiraToast');
+    const toastMsg  = document.getElementById('toastMsg');
+    toastMsg.textContent = `${ticketId} created — ${shortMsg}`;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  // ── Load report ───────────────────────────────────────────────────────────
   async function loadReport() {
     try {
       const res = await fetch('/api/scan/report');
@@ -222,59 +395,37 @@
     }
   }
 
-  /**
-   * renderDashboard
-   * Renders the full dashboard from report data.
-   *
-   * @param {object} report - pipeline-report.json content
-   */
+  // ── Render dashboard ──────────────────────────────────────────────────────
   function renderDashboard(report) {
-    // ── Meta ────────────────────────────────────────────────────────────────
     const date = new Date(report.generatedAt).toLocaleString();
     document.getElementById('reportMeta').textContent =
       `Generated: ${date}  |  Total Findings: ${report.totalFindings}`;
 
-    // ── Stat boxes ───────────────────────────────────────────────────────────
     const statGrid = document.getElementById('statGrid');
     statGrid.innerHTML = '';
-
-    // Total findings box
     statGrid.innerHTML += statBox(report.totalFindings, 'Total Findings', '#6366f1');
-
-    // Per-tool boxes
     TOOL_ORDER.forEach(tool => {
-      const t      = report.tools[tool];
-      const config = TOOL_CONFIG[tool];
+      const t = report.tools[tool];
+      const c = TOOL_CONFIG[tool];
       if (!t) return;
       statGrid.innerHTML += statBox(
         t.findingCount,
-        `${config.icon} ${config.label}`,
+        `${c.icon} ${c.label}`,
         t.status === 'skipped' ? 'var(--text-faint)' : 'var(--text-primary)'
       );
     });
 
-    // ── Tool sections ────────────────────────────────────────────────────────
     const toolSections = document.getElementById('toolSections');
     toolSections.innerHTML = '';
-
     TOOL_ORDER.forEach(tool => {
       toolSections.innerHTML += renderToolSection(tool, report.tools[tool]);
     });
 
-    // ── Show dashboard ───────────────────────────────────────────────────────
     document.getElementById('loadingState').style.display    = 'none';
     document.getElementById('dashboardContent').style.display = 'block';
   }
 
-  /**
-   * statBox
-   * Returns HTML for a summary stat box.
-   *
-   * @param {number} count - Number to display
-   * @param {string} label - Label text
-   * @param {string} color - Color for the number
-   * @returns {string}
-   */
+  // ── Stat box ──────────────────────────────────────────────────────────────
   function statBox(count, label, color) {
     return `
       <div class="stat-box">
@@ -283,19 +434,11 @@
       </div>`;
   }
 
-  /**
-   * renderToolSection
-   * Returns HTML for one tool's findings section.
-   *
-   * @param {string} tool   - Tool name
-   * @param {object} data   - Tool data from report
-   * @returns {string}
-   */
+  // ── Tool section ──────────────────────────────────────────────────────────
   function renderToolSection(tool, data) {
     const config = TOOL_CONFIG[tool];
     if (!data) return '';
 
-    // ── Severity summary chips ────────────────────────────────────────────
     let severityHtml = '';
     if (data.severityBreakdown && Object.keys(data.severityBreakdown).length > 0) {
       severityHtml = Object.entries(data.severityBreakdown)
@@ -304,13 +447,15 @@
         .join('');
     }
 
-    // ── Findings table ────────────────────────────────────────────────────
     let tableHtml = '';
     if (data.status === 'skipped') {
       tableHtml = `<div class="tool-skipped">Tool was skipped — no report available</div>`;
     } else if (!data.findings || data.findings.length === 0) {
       tableHtml = `<div class="no-findings">✅ No findings detected</div>`;
     } else {
+      const rows = data.findings.map((f, i) =>
+        renderFindingRow(tool, f, `${tool}-${i}`)
+      ).join('');
       tableHtml = `
         <table class="findings-table">
           <thead>
@@ -318,12 +463,11 @@
               <th>Severity</th>
               <th>File</th>
               <th>Line</th>
-              <th>Rule / Message</th>
+              <th>Description</th>
+              <th></th>
             </tr>
           </thead>
-          <tbody>
-            ${data.findings.map(f => renderFindingRow(tool, f)).join('')}
-          </tbody>
+          <tbody>${rows}</tbody>
         </table>`;
     }
 
@@ -343,66 +487,61 @@
       </div>`;
   }
 
-  /**
-   * renderFindingRow
-   * Returns HTML for one finding row — handles each tool's native fields.
-   *
-   * @param {string} tool     - Tool name
-   * @param {object} finding  - Raw finding object
-   * @returns {string}
-   */
-  function renderFindingRow(tool, finding) {
-    let severity = '';
-    let file     = '';
-    let line     = '';
-    let message  = '';
+  // ── Finding row + detail row ──────────────────────────────────────────────
+  function renderFindingRow(tool, finding, uid) {
+    const f         = extractFields(tool, finding);
+    const shortFile = f.file.split(/[\\/]/).slice(-2).join('/');
+    const fix       = getFix(f.ruleId);
+    const msgShort  = f.message.length > 60
+      ? f.message.substring(0, 60) + '...'
+      : f.message;
 
-    switch (tool) {
-      case 'gitleaks':
-        severity = 'Secret';
-        file     = finding.File     || '—';
-        line     = finding.StartLine || '—';
-        message  = finding.RuleID   || '—';
-        break;
-
-      case 'semgrep':
-        severity = finding?.extra?.severity || 'INFO';
-        file     = finding.path             || '—';
-        line     = finding?.start?.line     || '—';
-        message  = finding?.extra?.message  || finding.check_id || '—';
-        break;
-
-      case 'sonarqube':
-        severity = finding.severity   || '—';
-        file     = finding.component  || '—';
-        line     = finding.line       || '—';
-        message  = finding.message    || finding.rule || '—';
-        break;
-
-      case 'codacy':
-        severity = finding?.patternInfo?.level || '—';
-        file     = finding.filePath            || '—';
-        line     = finding.lineNumber          || '—';
-        message  = finding.message             || '—';
-        break;
-    }
-
-    // Shorten long file paths — show only last 2 segments
-    const shortFile = file.split(/[\\/]/).slice(-2).join('/');
-
-    return `
+    const findingRow = `
       <tr>
-        <td><span class="${getPillClass(severity)}">${severity}</span></td>
-        <td><span class="file-path truncate" title="${file}">${shortFile}</span></td>
-        <td>${line}</td>
-        <td class="truncate" title="${message}">${message}</td>
+        <td><span class="${getPillClass(f.severity)}">${f.severity}</span></td>
+        <td><span class="file-path truncate" title="${f.file}">${shortFile}</span></td>
+        <td>${f.line}</td>
+        <td class="truncate" title="${f.message}">${msgShort}</td>
+        <td style="white-space:nowrap;">
+          <button
+            id="btn-detail-${uid}"
+            class="btn-finding"
+            onclick="toggleDetail('${uid}')"
+          >Details ▾</button>
+          <button
+            class="btn-finding btn-ticket"
+            onclick="createTicket('${f.message.replace(/'/g, "\\'")}')"
+            style="margin-left:6px;"
+          >Raise JIRA Ticket</button>
+        </td>
       </tr>`;
+
+    const detailRow = `
+      <tr id="detail-${uid}" class="detail-row">
+        <td class="detail-cell" colspan="5">
+          <div class="detail-grid">
+            <span class="detail-label">Rule ID</span>
+            <span class="detail-value mono">${f.ruleId}</span>
+
+            <span class="detail-label">File</span>
+            <span class="detail-value mono">${f.file}</span>
+
+            <span class="detail-label">Line</span>
+            <span class="detail-value">${f.line}</span>
+
+            <span class="detail-label">Description</span>
+            <span class="detail-value">${f.message}</span>
+
+            <span class="detail-label">How to Fix</span>
+            <span class="detail-value fix">${fix}</span>
+          </div>
+        </td>
+      </tr>`;
+
+    return findingRow + detailRow;
   }
 
-  /**
-   * downloadReport
-   * Triggers download of pipeline-report.json.
-   */
+  // ── Download report ───────────────────────────────────────────────────────
   function downloadReport() {
     if (!reportData) return;
     const blob = new Blob(
@@ -417,7 +556,6 @@
     URL.revokeObjectURL(url);
   }
 
-  // Load report on page load
   loadReport();
 </script>
 
