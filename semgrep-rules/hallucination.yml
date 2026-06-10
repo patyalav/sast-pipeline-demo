@@ -1,0 +1,18 @@
+rules:
+  - id: hallucinated-package-import
+    patterns:
+      - pattern: require('secure-input-validator')
+    message: >
+      AI Hallucination Risk — 'secure-input-validator' is not a known npm package.
+      AI code generators sometimes import plausible-sounding but non-existent packages.
+      An attacker could publish a malicious package with this exact name (dependency confusion attack).
+      Verify this package exists on npmjs.com before using it.
+    languages: [javascript]
+    severity: ERROR
+    metadata:
+      category: security
+      technology: [javascript, nodejs]
+      owasp:
+        - A08:2021 - Software and Data Integrity Failures
+      cwe:
+        - CWE-829 - Inclusion of Functionality from Untrusted Control Sphere

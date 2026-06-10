@@ -11,19 +11,16 @@
       border-bottom   : 1px solid var(--border-color);
       margin-bottom   : 32px;
     }
-
     .dashboard-header h1 {
       font-size       : 24px;
       font-weight     : 700;
       color           : var(--text-primary);
     }
-
     .dashboard-header .meta {
       font-size       : 13px;
       color           : var(--text-muted);
       margin-top      : 6px;
     }
-
     .header-actions {
       display         : flex;
       align-items     : center;
@@ -31,16 +28,13 @@
       flex-wrap       : wrap;
       gap             : 12px;
     }
-
     .tool-section       { margin-bottom: 32px; }
-
     .tool-section-header {
       display         : flex;
       align-items     : center;
       justify-content : space-between;
       margin-bottom   : 16px;
     }
-
     .tool-section-title {
       display         : flex;
       align-items     : center;
@@ -49,65 +43,47 @@
       font-weight     : 700;
       color           : var(--text-primary);
     }
-
     .tool-section-title .icon { font-size: 20px; }
-
     .tool-finding-count {
       font-size       : 13px;
       color           : var(--text-muted);
       font-weight     : 400;
     }
-
     .severity-summary {
       display         : flex;
       gap             : 8px;
       flex-wrap       : wrap;
     }
-
     .sev-chip {
       font-size       : 12px;
       padding         : 3px 10px;
       border-radius   : 12px;
       font-weight     : 600;
     }
-
     .no-findings {
       text-align      : center;
       padding         : 24px;
       color           : var(--text-muted);
       font-size       : 13px;
     }
-
-    .tool-skipped {
-      text-align      : center;
-      padding         : 16px;
-      color           : var(--text-faint);
-      font-size       : 12px;
-      font-style      : italic;
-    }
-
     .loading {
       text-align      : center;
       padding         : 60px 24px;
       color           : var(--text-muted);
       font-size       : 15px;
     }
-
     .load-error {
       text-align      : center;
       padding         : 40px 24px;
       color           : var(--error);
       font-size       : 14px;
     }
-
     .truncate {
       max-width       : 240px;
       white-space     : nowrap;
       overflow        : hidden;
       text-overflow   : ellipsis;
     }
-
-    /* ── Action buttons in finding row ───────────────────────────────────── */
     .btn-finding {
       font-size       : 11px;
       padding         : 3px 9px;
@@ -119,39 +95,31 @@
       white-space     : nowrap;
       transition      : all 0.15s;
     }
-
     .btn-finding:hover {
       border-color    : var(--accent);
       color           : var(--accent);
     }
-
     .btn-ticket:hover {
       border-color    : #f59e0b;
       color           : #f59e0b;
     }
-
-    /* ── Details dropdown row ────────────────────────────────────────────── */
     .detail-row {
       display         : none;
       background      : #131926;
     }
-
     .detail-row.open {
       display         : table-row;
     }
-
     .detail-cell {
       padding         : 14px 20px !important;
       border-bottom   : 1px solid var(--border-color);
     }
-
     .detail-grid {
       display         : grid;
       grid-template-columns: 120px 1fr;
       gap             : 6px 16px;
       font-size       : 12px;
     }
-
     .detail-label {
       color           : var(--text-muted);
       font-weight     : 600;
@@ -160,23 +128,16 @@
       letter-spacing  : 0.5px;
       padding-top     : 2px;
     }
-
     .detail-value {
       color           : var(--text-secondary);
       line-height     : 1.5;
     }
-
     .detail-value.mono {
       font-family     : 'Courier New', monospace;
       font-size       : 11px;
       color           : var(--text-muted);
     }
-
-    .detail-value.fix {
-      color           : #22c55e;
-    }
-
-    /* ── JIRA Toast ──────────────────────────────────────────────────────── */
+    .detail-value.fix { color: #22c55e; }
     .toast {
       position        : fixed;
       bottom          : 28px;
@@ -197,13 +158,10 @@
       transition      : all 0.3s ease;
       max-width       : 420px;
     }
-
     .toast.show {
       transform       : translateY(0);
       opacity         : 1;
     }
-
-    .toast-icon { font-size: 16px; }
   </style>
 </head>
 <body>
@@ -237,7 +195,7 @@
     </div>
 
     <div class="stat-grid" id="statGrid"></div>
-    <div id="toolSections"></div>
+    <div id="categorySections"></div>
     <div class="footer">SAST Pipeline Demo — Local</div>
 
   </div>
@@ -253,34 +211,82 @@
   let reportData  = null;
   let ticketCount = 100;
 
-  // ── Tool config ────────────────────────────────────────────────────────────
-  const TOOL_CONFIG = {
-    gitleaks  : { icon: '🔑', label: 'Secret Detection',                 desc: 'Hardcoded secrets and credentials' },
-    semgrep   : { icon: '🛡️', label: 'OWASP Vulnerability Analysis',    desc: 'OWASP Top 10 & AI Hallucination Risks' },
-    sonarqube : { icon: '📊', label: 'Code Quality & Security Hotspots', desc: 'Bugs, complexity, and security risks' },
-    codacy    : { icon: '📉', label: 'Technical Debt',                   desc: 'Unused code, duplications, bad practices' }
-  };
+  // ── Category config — display order, icon, label, desc ────────────────────
+  // NOTE: Dashboard shows findings CATEGORY-WISE not tool-wise.
+  // Backend produces per-tool JSON — frontend remaps into these 4 categories.
+  // This keeps backend unchanged while giving stakeholders a tool-agnostic view.
+  const CATEGORY_CONFIG = [
+    {
+      id   : 'ai-hallucination',
+      icon : '🤖',
+      label: 'AI Hallucination Checks',
+      desc : 'Suspicious or non-existent package imports'
+    },
+    {
+      id   : 'owasp',
+      icon : '🛡️',
+      label: 'OWASP Top 10 Vulnerabilities',
+      desc : 'Injection, XSS, weak cryptography and OWASP Top 10'
+    },
+    {
+      id   : 'technical-debt',
+      icon : '📉',
+      label: 'Technical Debt',
+      desc : 'Complexity, unused code, empty catch blocks, duplications'
+    },
+    {
+      id   : 'secret-leakage',
+      icon : '🔑',
+      label: 'Secret Leakage',
+      desc : 'Hardcoded credentials, API keys and tokens'
+    }
+  ];
 
-  const TOOL_ORDER = ['gitleaks', 'semgrep', 'sonarqube', 'codacy'];
+  // ── Category mapping function ──────────────────────────────────────────────
+  // Maps each finding from any tool into one of the 4 categories.
+  // Rule: check_id / ruleId / message keywords determine category.
+  function getCategory(tool, finding) {
+    const f      = extractFields(tool, finding);
+    const ruleId = (f.ruleId  || '').toLowerCase();
+    const msg    = (f.message || '').toLowerCase();
 
-  // ── Fix suggestions — mapped by rule ID / pattern ─────────────────────────
+    // AI Hallucination — custom semgrep rule only
+    if (ruleId.includes('hallucinated') || msg.includes('hallucination') || msg.includes('ai hallucination')) {
+      return 'ai-hallucination';
+    }
+
+    // Secret Leakage — Gitleaks all + SonarQube hardcoded credential rules
+    if (tool === 'gitleaks') return 'secret-leakage';
+    if (ruleId.includes('s2068') || msg.includes('hardcoded') && msg.includes('password')) {
+      return 'secret-leakage';
+    }
+
+    // Technical Debt — SonarQube MAJOR/MINOR + all Codacy
+    if (tool === 'codacy') return 'technical-debt';
+    if (tool === 'sonarqube') {
+      const sev = (finding.severity || '').toUpperCase();
+      if (sev === 'MAJOR' || sev === 'MINOR') return 'technical-debt';
+    }
+
+    // OWASP Vulnerabilities — everything else from Semgrep + SonarQube BLOCKER/CRITICAL
+    return 'owasp';
+  }
+
+  // ── Fix suggestions ────────────────────────────────────────────────────────
   const FIX_MAP = {
-    // Gitleaks
     'generic-api-key'            : 'Remove from source code. Store in environment variable: process.env.API_KEY',
     'mailgun-private-api-token'  : 'Rotate the Mailgun API token immediately. Store new token in .env file.',
     'twilio-api-key'             : 'Rotate the Twilio key immediately. Load via process.env.TWILIO_AUTH_TOKEN',
     'slack-webhook-url'          : 'Regenerate the Slack webhook in workspace settings. Store URL in .env file.',
-    // Semgrep
+    'hallucinated'               : 'Verify this package exists on npmjs.com. If not — remove immediately. Never install unverified packages.',
     'javascript.sqli'            : 'Use parameterised queries: db.query("SELECT * FROM users WHERE id = ?", [id])',
     'javascript.xss'             : 'Use res.render() with a template engine instead of res.send() with raw HTML.',
     'javascript.eval'            : 'Remove eval() entirely. Use JSON.parse() for data or redesign the logic.',
     'javascript.crypto'          : 'Replace MD5 with bcrypt: const hash = await bcrypt.hash(password, 12)',
-    // SonarQube
-    'javascript:S2077'           : 'Use parameterised queries — never concatenate user input into SQL strings.',
-    'javascript:S2068'           : 'Remove hardcoded password. Load from environment: process.env.DB_PASSWORD',
-    'javascript:S3776'           : 'Break function into smaller focused functions. Maximum nesting depth: 3 levels.',
-    'javascript:S1481'           : 'Remove unused variable declaration — it is dead code.',
-    // Codacy
+    'javascript:s2077'           : 'Use parameterised queries — never concatenate user input into SQL strings.',
+    'javascript:s2068'           : 'Remove hardcoded password. Load from environment: process.env.DB_PASSWORD',
+    'javascript:s3776'           : 'Break function into smaller focused functions. Maximum nesting depth: 3 levels.',
+    'javascript:s1481'           : 'Remove unused variable declaration — it is dead code.',
     'sql-injection'              : 'Use parameterised queries — never concatenate user input into SQL strings.',
     'no-eval'                    : 'Remove eval() entirely. Redesign logic to avoid dynamic code execution.',
     'no-empty-catch'             : 'Always log or handle caught errors: catch(err) { logger.error(err.message); }',
@@ -288,7 +294,6 @@
     'xss-direct-write'           : 'Use res.render() with auto-escaping template engine instead of res.send().'
   };
 
-  // ── Default fix if rule not in map ────────────────────────────────────────
   function getFix(ruleId) {
     if (!ruleId) return 'Review finding and apply appropriate remediation.';
     const key = Object.keys(FIX_MAP).find(k =>
@@ -323,20 +328,18 @@
       case 'gitleaks':
         return {
           severity : 'Secret',
-          file     : finding.File      || '—',
+          file     : finding.File       || '—',
           line     : finding.StartLine  || '—',
           message  : `Secret detected — ${finding.RuleID || '—'}`,
-          ruleId   : finding.RuleID    || '—',
-          findingId: finding.Fingerprint || '—'
+          ruleId   : finding.RuleID     || '—'
         };
       case 'semgrep':
         return {
           severity : finding?.extra?.severity || 'INFO',
           file     : finding.path             || '—',
-          line     : finding?.start?.line      || '—',
-          message  : finding?.extra?.message   || '—',
-          ruleId   : finding.check_id          || '—',
-          findingId: `${finding.check_id}:${finding.path}:${finding?.start?.line}`
+          line     : finding?.start?.line     || '—',
+          message  : finding?.extra?.message  || '—',
+          ruleId   : finding.check_id         || '—'
         };
       case 'sonarqube':
         return {
@@ -344,20 +347,18 @@
           file     : finding.component || '—',
           line     : finding.line      || '—',
           message  : finding.message   || '—',
-          ruleId   : finding.rule      || '—',
-          findingId: finding.key       || '—'
+          ruleId   : finding.rule      || '—'
         };
       case 'codacy':
         return {
-          severity : finding?.patternInfo?.level   || '—',
+          severity : finding?.patternInfo?.level    || '—',
           file     : finding.filePath               || '—',
           line     : finding.lineNumber             || '—',
           message  : finding.message                || '—',
-          ruleId   : finding?.patternInfo?.patternId || '—',
-          findingId: finding.issueId                || '—'
+          ruleId   : finding?.patternInfo?.patternId || '—'
         };
       default:
-        return { severity: '—', file: '—', line: '—', message: '—', ruleId: '—', findingId: '—' };
+        return { severity: '—', file: '—', line: '—', message: '—', ruleId: '—' };
     }
   }
 
@@ -373,11 +374,10 @@
   // ── JIRA toast ────────────────────────────────────────────────────────────
   function createTicket(message) {
     ticketCount++;
-    const ticketId  = `SAST-${ticketCount}`;
-    const shortMsg  = message.length > 50 ? message.substring(0, 50) + '...' : message;
-    const toast     = document.getElementById('jiraToast');
-    const toastMsg  = document.getElementById('toastMsg');
-    toastMsg.textContent = `${ticketId} created — ${shortMsg}`;
+    const ticketId = `SAST-${ticketCount}`;
+    const shortMsg = message.length > 50 ? message.substring(0, 50) + '...' : message;
+    const toast    = document.getElementById('jiraToast');
+    document.getElementById('toastMsg').textContent = `${ticketId} created — ${shortMsg}`;
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3500);
   }
@@ -398,27 +398,40 @@
   // ── Render dashboard ──────────────────────────────────────────────────────
   function renderDashboard(report) {
     const date = new Date(report.generatedAt).toLocaleString();
-    document.getElementById('reportMeta').textContent =
-      `Generated: ${date}  |  Total Findings: ${report.totalFindings}`;
 
-    const statGrid = document.getElementById('statGrid');
-    statGrid.innerHTML = '';
-    statGrid.innerHTML += statBox(report.totalFindings, 'Total Findings', '#6366f1');
-    TOOL_ORDER.forEach(tool => {
-      const t = report.tools[tool];
-      const c = TOOL_CONFIG[tool];
-      if (!t) return;
-      statGrid.innerHTML += statBox(
-        t.findingCount,
-        `${c.icon} ${c.label}`,
-        t.status === 'skipped' ? 'var(--text-faint)' : 'var(--text-primary)'
-      );
+    // ── Build category buckets ────────────────────────────────────────────
+    // Remap all tool findings into 4 categories
+    const buckets = {};
+    CATEGORY_CONFIG.forEach(c => { buckets[c.id] = []; });
+
+    Object.entries(report.tools || {}).forEach(([tool, toolData]) => {
+      if (!toolData?.findings) return;
+      toolData.findings.forEach(finding => {
+        const cat = getCategory(tool, finding);
+        const f   = extractFields(tool, finding);
+        buckets[cat].push({ ...f, _tool: tool, _raw: finding });
+      });
     });
 
-    const toolSections = document.getElementById('toolSections');
-    toolSections.innerHTML = '';
-    TOOL_ORDER.forEach(tool => {
-      toolSections.innerHTML += renderToolSection(tool, report.tools[tool]);
+    const totalFindings = Object.values(buckets).reduce((sum, arr) => sum + arr.length, 0);
+
+    document.getElementById('reportMeta').textContent =
+      `Generated: ${date}  |  Total Findings: ${totalFindings}`;
+
+    // ── Stat boxes — per category ────────────────────────────────────────
+    const statGrid = document.getElementById('statGrid');
+    statGrid.innerHTML = '';
+    statGrid.innerHTML += statBox(totalFindings, 'Total Findings', '#6366f1');
+    CATEGORY_CONFIG.forEach(cat => {
+      const count = buckets[cat.id].length;
+      statGrid.innerHTML += statBox(count, `${cat.icon} ${cat.label}`, 'var(--text-primary)');
+    });
+
+    // ── Category sections ────────────────────────────────────────────────
+    const sections = document.getElementById('categorySections');
+    sections.innerHTML = '';
+    CATEGORY_CONFIG.forEach(cat => {
+      sections.innerHTML += renderCategorySection(cat, buckets[cat.id]);
     });
 
     document.getElementById('loadingState').style.display    = 'none';
@@ -434,27 +447,26 @@
       </div>`;
   }
 
-  // ── Tool section ──────────────────────────────────────────────────────────
-  function renderToolSection(tool, data) {
-    const config = TOOL_CONFIG[tool];
-    if (!data) return '';
+  // ── Category section ──────────────────────────────────────────────────────
+  function renderCategorySection(cat, findings) {
 
-    let severityHtml = '';
-    if (data.severityBreakdown && Object.keys(data.severityBreakdown).length > 0) {
-      severityHtml = Object.entries(data.severityBreakdown)
-        .map(([sev, count]) =>
-          `<span class="${getPillClass(sev)} sev-chip">${sev}: ${count}</span>`)
-        .join('');
-    }
+    // Severity breakdown for this category
+    const breakdown = {};
+    findings.forEach(f => {
+      breakdown[f.severity] = (breakdown[f.severity] || 0) + 1;
+    });
+
+    const severityHtml = Object.entries(breakdown)
+      .map(([sev, count]) =>
+        `<span class="${getPillClass(sev)} sev-chip">${sev}: ${count}</span>`)
+      .join('');
 
     let tableHtml = '';
-    if (data.status === 'skipped') {
-      tableHtml = `<div class="tool-skipped">Tool was skipped — no report available</div>`;
-    } else if (!data.findings || data.findings.length === 0) {
+    if (findings.length === 0) {
       tableHtml = `<div class="no-findings">✅ No findings detected</div>`;
     } else {
-      const rows = data.findings.map((f, i) =>
-        renderFindingRow(tool, f, `${tool}-${i}`)
+      const rows = findings.map((f, i) =>
+        renderFindingRow(f, `${cat.id}-${i}`)
       ).join('');
       tableHtml = `
         <table class="findings-table">
@@ -475,9 +487,9 @@
       <div class="tool-section">
         <div class="tool-section-header">
           <div class="tool-section-title">
-            <span class="icon">${config.icon}</span>
-            ${config.label}
-            <span class="tool-finding-count">${config.desc}</span>
+            <span class="icon">${cat.icon}</span>
+            ${cat.label}
+            <span class="tool-finding-count">${cat.desc}</span>
           </div>
           <div class="severity-summary">${severityHtml}</div>
         </div>
@@ -488,8 +500,7 @@
   }
 
   // ── Finding row + detail row ──────────────────────────────────────────────
-  function renderFindingRow(tool, finding, uid) {
-    const f         = extractFields(tool, finding);
+  function renderFindingRow(f, uid) {
     const shortFile = f.file.split(/[\\/]/).slice(-2).join('/');
     const fix       = getFix(f.ruleId);
     const msgShort  = f.message.length > 60

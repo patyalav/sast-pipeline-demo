@@ -16,22 +16,22 @@
  *         ↓
  *   statusManager → running
  *         ↓
- *   Build semgrep CLI command
+ *   Run 1 — --config auto → OWASP rules → temp-auto-report.json
  *         ↓
- *   Execute CLI — output written to semgrep-report.json
+ *   Run 2 — custom hallucination rules → temp-hallucination-report.json
  *         ↓
- *   Semgrep exit code:
- *   → 0  = no findings    → read file, setDone(0)
- *   → 1  = findings found → read file, setDone(count)
- *   → other = real error  → setFailed
+ *   Merge both results into semgrep-report.json
  *         ↓
- *   Return
+ *   Delete temp files
+ *         ↓
+ *   setDone(total findings count)
  *
  *   ── Error scenarios ──
- *   Semgrep not in PATH      → setFailed
- *   repoPath does not exist  → setFailed
- *   Report file not written  → setFailed
- *   PYTHONUTF8 not set       → may cause encoding errors on Windows
+ *   Semgrep not in PATH           → setFailed
+ *   repoPath does not exist       → setFailed
+ *   Custom rules file not found   → log warning, continue with auto scan only
+ *   Report file not written       → setFailed
+ *   PYTHONUTF8 not set            → may cause encoding errors on Windows
  *
  * ─────────────────────────────────────────────────────────────────────────────
  */
@@ -47,9 +47,49 @@ const execAsync = util.promisify(exec);
 const logger        = require('../logger');
 const statusManager = require('../statusManager');
 
+// ── Path to custom hallucination rules ────────────────────────────────────────
+const HALLUCINATION_RULES = path.resolve(__dirname, '../semgrep-rules/hallucination.yml');
+
+/**
+ * runSemgrepCmd
+ * Executes a single Semgrep command and returns parsed results array.
+ * Handles both exit code 0 (no findings) and exit code 1 (findings found).
+ *
+ * @param {string} cmd        - Full Semgrep CLI command
+ * @param {string} outputFile - Path where Semgrep writes JSON output
+ * @returns {Promise<Array>}  - Array of findings (empty if none)
+ */
+async function runSemgrepCmd(cmd, outputFile) {
+  try {
+    await execAsync(cmd, {
+      env      : { ...process.env, PYTHONUTF8: '1' },
+      maxBuffer: 50 * 1024 * 1024
+    });
+  } catch (err) {
+    // Exit code 1 = findings found — not a real error
+    // Only re-throw if output file was NOT written
+    if (!fs.existsSync(outputFile)) {
+      throw err;
+    }
+  }
+
+  if (!fs.existsSync(outputFile)) {
+    return [];
+  }
+
+  try {
+    const raw = JSON.parse(fs.readFileSync(outputFile, 'utf8'));
+    return Array.isArray(raw?.results) ? raw.results : [];
+  } catch (parseErr) {
+    logger.warn(`Semgrep — failed to parse output: ${outputFile} | ${parseErr.message}`);
+    return [];
+  }
+}
+
 /**
  * run
- * Executes Semgrep against the cloned repo and writes findings to JSON.
+ * Executes two Semgrep scans — OWASP rules + hallucination rules —
+ * merges results and writes semgrep-report.json.
  *
  * @param {string} repoPath   - Absolute path to the cloned repository
  * @param {string} reportsDir - Absolute path to the timestamped reports folder
@@ -59,56 +99,44 @@ async function run(repoPath, reportsDir) {
   statusManager.setRunning('semgrep');
   logger.info('Semgrep — starting scan');
 
-  const reportFile = path.join(reportsDir, 'semgrep-report.json');
-
-  // ── Build CLI command ──────────────────────────────────────────────────────
-  // --config auto        — use Semgrep's recommended ruleset (OWASP + best practices)
-  // --json               — output as JSON
-  // --output             — write JSON to file
-  // --no-git-ignore      — scan all files including gitignored ones
-  // --timeout 120        — 2 min timeout per rule (prevents hanging)
-  const cmd = `semgrep --config auto --json --output "${reportFile}" --timeout 120 "${repoPath}"`;
-
-  logger.info(`Semgrep — command: ${cmd}`);
+  const reportFile      = path.join(reportsDir, 'semgrep-report.json');
+  const autoTempFile    = path.join(reportsDir, 'semgrep-auto-temp.json');
+  const hallTempFile    = path.join(reportsDir, 'semgrep-hall-temp.json');
 
   try {
-    // ── PYTHONUTF8=1 required on Windows to handle non-ASCII characters ──────
-    const { stderr } = await execAsync(cmd, {
-      env: { ...process.env, PYTHONUTF8: '1' },
-      maxBuffer: 50 * 1024 * 1024  // 50MB — Semgrep output can be large
-    });
+    // ── Scan 1 — OWASP auto rules ─────────────────────────────────────────
+    logger.info('Semgrep — running OWASP ruleset');
+    const cmdAuto = `semgrep --config auto --json --output "${autoTempFile}" --timeout 120 "${repoPath}"`;
+    logger.debug(`Semgrep — auto command: ${cmdAuto}`);
+    const autoFindings = await runSemgrepCmd(cmdAuto, autoTempFile);
+    logger.info(`Semgrep — OWASP scan complete | findings: ${autoFindings.length}`);
 
-    if (stderr) {
-      logger.debug(`Semgrep — stderr: ${stderr}`);
+    // ── Scan 2 — Hallucination custom rules ───────────────────────────────
+    let hallFindings = [];
+    if (fs.existsSync(HALLUCINATION_RULES)) {
+      logger.info('Semgrep — running hallucination ruleset');
+      const cmdHall = `semgrep --config "${HALLUCINATION_RULES}" --json --output "${hallTempFile}" --timeout 60 "${repoPath}"`;
+      logger.debug(`Semgrep — hallucination command: ${cmdHall}`);
+      hallFindings = await runSemgrepCmd(cmdHall, hallTempFile);
+      logger.info(`Semgrep — hallucination scan complete | findings: ${hallFindings.length}`);
+    } else {
+      logger.warn(`Semgrep — hallucination rules not found: ${HALLUCINATION_RULES}`);
     }
 
-    // ── Read and parse report ─────────────────────────────────────────────────
-    if (!fs.existsSync(reportFile)) {
-      logger.info('Semgrep — no report file written, writing empty report');
-      fs.writeFileSync(reportFile, JSON.stringify({ results: [] }, null, 2));
-      statusManager.setDone('semgrep', 0);
-      return;
-    }
+    // ── Merge results ─────────────────────────────────────────────────────
+    const allFindings = [...autoFindings, ...hallFindings];
+    const merged      = { results: allFindings };
 
-    const raw      = JSON.parse(fs.readFileSync(reportFile, 'utf8'));
-    const findings = Array.isArray(raw?.results) ? raw.results : [];
-    statusManager.setDone('semgrep', findings.length);
-    logger.info(`Semgrep — scan complete | findings: ${findings.length}`);
+    fs.writeFileSync(reportFile, JSON.stringify(merged, null, 2));
+    logger.info(`Semgrep — merged report written | total findings: ${allFindings.length}`);
+
+    // ── Cleanup temp files ────────────────────────────────────────────────
+    if (fs.existsSync(autoTempFile)) fs.unlinkSync(autoTempFile);
+    if (fs.existsSync(hallTempFile)) fs.unlinkSync(hallTempFile);
+
+    statusManager.setDone('semgrep', allFindings.length);
 
   } catch (err) {
-    // ── Exit code 1 means findings found — not a real error ──────────────────
-    // Check if report file was written despite the non-zero exit code
-    if (fs.existsSync(reportFile)) {
-      try {
-        const raw      = JSON.parse(fs.readFileSync(reportFile, 'utf8'));
-        const findings = Array.isArray(raw?.results) ? raw.results : [];
-        statusManager.setDone('semgrep', findings.length);
-        logger.info(`Semgrep — scan complete | findings: ${findings.length}`);
-        return;
-      } catch (parseErr) {
-        logger.error(`Semgrep — failed to parse report | ${parseErr.message}`);
-      }
-    }
     logger.error(`Semgrep — scan failed | ${err.message}`);
     statusManager.setFailed('semgrep', err.message);
   }
