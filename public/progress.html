@@ -16,9 +16,7 @@
 
     .step-row:last-child { border-bottom: none; }
 
-    .step-row.running {
-      background      : #1a2236;
-    }
+    .step-row.running { background: #1a2236; }
 
     .step-left {
       display         : flex;
@@ -97,10 +95,7 @@
       margin-top      : 20px;
     }
 
-    .elapsed {
-      font-size       : 12px;
-      color           : var(--text-faint);
-    }
+    .elapsed { font-size: 12px; color: var(--text-faint); }
 
     .divider {
       height          : 1px;
@@ -153,28 +148,13 @@
 
     <div class="divider"></div>
 
-    <!-- Gitleaks — Secret Detection -->
-    <div class="step-row" id="row-gitleaks">
-      <div class="step-left">
-        <div class="step-icon">🔑</div>
-        <div class="step-text">
-          <div class="step-name">Secret Detection</div>
-          <div class="step-desc">Scanning for hardcoded secrets and credentials</div>
-        </div>
-      </div>
-      <div class="step-right">
-        <span class="status-dot pending" id="dot-gitleaks"></span>
-        <span class="step-status pending" id="label-gitleaks">Pending</span>
-      </div>
-    </div>
-
-    <!-- Semgrep — OWASP Vulnerability Analysis -->
+    <!-- AI Hallucination Checks — driven by semgrep -->
     <div class="step-row" id="row-semgrep">
       <div class="step-left">
-        <div class="step-icon">🛡️</div>
+        <div class="step-icon">🤖</div>
         <div class="step-text">
-          <div class="step-name">OWASP Vulnerability Analysis</div>
-          <div class="step-desc">Scanning for OWASP Top 10 & AI Hallucination Risks</div>
+          <div class="step-name">AI Hallucination Checks</div>
+          <div class="step-desc">Scanning for suspicious and non-existent package imports</div>
         </div>
       </div>
       <div class="step-right">
@@ -183,13 +163,13 @@
       </div>
     </div>
 
-    <!-- SonarQube — Code Quality & Security Hotspots -->
+    <!-- OWASP Top 10 Vulnerabilities — driven by sonarqube -->
     <div class="step-row" id="row-sonarqube">
       <div class="step-left">
-        <div class="step-icon">📊</div>
+        <div class="step-icon">🛡️</div>
         <div class="step-text">
-          <div class="step-name">Code Quality & Security Hotspots</div>
-          <div class="step-desc">Scanning for bugs, complexity and security risks</div>
+          <div class="step-name">OWASP Top 10 Vulnerabilities</div>
+          <div class="step-desc">Scanning for injection, XSS and OWASP Top 10 risks</div>
         </div>
       </div>
       <div class="step-right">
@@ -198,18 +178,33 @@
       </div>
     </div>
 
-    <!-- Codacy — Technical Debt -->
+    <!-- Technical Debt — driven by codacy -->
     <div class="step-row" id="row-codacy">
       <div class="step-left">
         <div class="step-icon">📉</div>
         <div class="step-text">
           <div class="step-name">Technical Debt</div>
-          <div class="step-desc">Scanning for unused code, duplications and bad practices</div>
+          <div class="step-desc">Scanning for complexity, unused code and bad practices</div>
         </div>
       </div>
       <div class="step-right">
         <span class="status-dot pending" id="dot-codacy"></span>
         <span class="step-status pending" id="label-codacy">Pending</span>
+      </div>
+    </div>
+
+    <!-- Secret Leakage — driven by gitleaks -->
+    <div class="step-row" id="row-gitleaks">
+      <div class="step-left">
+        <div class="step-icon">🔑</div>
+        <div class="step-text">
+          <div class="step-name">Secret Leakage</div>
+          <div class="step-desc">Scanning for hardcoded credentials and API keys</div>
+        </div>
+      </div>
+      <div class="step-right">
+        <span class="status-dot pending" id="dot-gitleaks"></span>
+        <span class="step-status pending" id="label-gitleaks">Pending</span>
       </div>
     </div>
 
@@ -232,7 +227,7 @@
 
   </div>
 
-  <!-- Bottom row — elapsed + dashboard button -->
+  <!-- Bottom row -->
   <div class="bottom-row">
     <div class="elapsed" id="elapsed">Elapsed: 0s</div>
     <button
@@ -250,6 +245,7 @@
 </div>
 
 <script>
+  // ── Backend tool names — used to poll /api/scan/status ────────────────────
   const TOOLS = ['gitleaks', 'semgrep', 'sonarqube', 'codacy'];
   const STEPS = ['clone', 'cleanup'];
 
@@ -266,9 +262,10 @@
   /**
    * updateRow
    * Updates status dot, label, and row highlight for one step/tool.
+   * NOTE: row IDs match backend tool names — category names are display only.
    *
-   * @param {string} key  - Tool or step name
-   * @param {object} data - Status data
+   * @param {string} key  - Backend tool or step name (gitleaks, semgrep, etc.)
+   * @param {object} data - Status data from /api/scan/status
    */
   function updateRow(key, data) {
     const dot   = document.getElementById(`dot-${key}`);
@@ -280,6 +277,7 @@
     row.className   = `step-row${data.status === 'running' ? ' running' : ''}`;
     label.className = `step-status ${data.status}`;
 
+    // No finding counts shown — status only
     switch (data.status) {
       case 'pending':
         label.textContent = 'Pending';
@@ -288,9 +286,7 @@
         label.textContent = 'Running...';
         break;
       case 'done':
-        label.textContent = (data.findings !== null && data.findings !== undefined)
-          ? `Done — ${data.findings} findings`
-          : 'Done ✅';
+        label.textContent = 'Done ✅';
         break;
       case 'failed':
         label.textContent = 'Failed ✗';
@@ -302,7 +298,7 @@
    * updateProgress
    * Updates overall progress bar based on tool completion.
    *
-   * @param {object} status - Full status object
+   * @param {object} status - Full status object from /api/scan/status
    */
   function updateProgress(status) {
     const done = TOOLS.filter(t =>
@@ -322,7 +318,7 @@
       const res  = await fetch('/api/scan/status');
       const data = await res.json();
 
-      // Update scan meta with repo URL if available
+      // Update scan meta
       const repoUrl = sessionStorage.getItem('scanRepo');
       if (repoUrl) {
         document.getElementById('scanMeta').textContent = `Scanning: ${repoUrl}`;
